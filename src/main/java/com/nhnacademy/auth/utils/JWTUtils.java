@@ -1,6 +1,10 @@
 package com.nhnacademy.auth.utils;
 
+import com.nimbusds.jwt.JWTParser;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +13,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+@Slf4j
 @Component
 public class JWTUtils {
     private SecretKey secretKey;
@@ -25,11 +30,11 @@ public class JWTUtils {
     }
 
     public String getCategory(String token) {
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("category", String.class);
+        return getClaimsFromToken(token).get("category", String.class);
     }
 
     public String getUserEmail(String token) {
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("email", String.class);
+        return getClaimsFromToken(token).get("email", String.class);
     }
 
     public String getUserName(String token) {
@@ -41,7 +46,16 @@ public class JWTUtils {
     }
 
     public Boolean isExpired(String token) {
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
+        try {
+            return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return true;
+        }
+    }
+
+    private Claims getClaimsFromToken(String token) {
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
     }
 
     public String createAccessToken(String userEmail, String userName, String role) {

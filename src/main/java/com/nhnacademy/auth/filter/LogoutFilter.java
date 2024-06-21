@@ -62,7 +62,8 @@ public class LogoutFilter extends GenericFilterBean {
             return;
         }
 
-        RefreshEntity rf = (RefreshEntity) redisTemplate.opsForHash().get(refresh, RedisUtils.getTokenPrefix());
+        //RefreshEntity rf = (RefreshEntity) redisTemplate.opsForHash().get(refresh, RedisUtils.getTokenPrefix());
+        String rf = (String) redisTemplate.opsForHash().get(refresh, RedisUtils.getTokenPrefix());
         if (rf == null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
