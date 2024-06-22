@@ -2,10 +2,9 @@ package com.nhnacademy.auth.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.auth.domain.CustomUserDetails;
-import com.nhnacademy.auth.domain.RefreshEntity;
+import com.nhnacademy.auth.dto.TokenResponseDto;
 import com.nhnacademy.auth.dto.ClientLoginRequestDto;
 import com.nhnacademy.auth.utils.JWTUtils;
-import com.nhnacademy.auth.utils.RedisUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,12 +20,13 @@ import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final JWTUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
-    private  final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public LoginFilter(AuthenticationManager authenticationManager, JWTUtils jwtUtils, RedisTemplate<String, Object> redisTemplate) {
         this.authenticationManager = authenticationManager;
@@ -43,27 +43,24 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(req.getClientEmail(), req.getClientPassword(), null);
-
-        return authenticationManager.authenticate(authToken);
+        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.getClientEmail(), req.getClientPassword(), null));
     }
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         CustomUserDetails customUserDetails = (CustomUserDetails) authResult.getPrincipal();
-
         String email = customUserDetails.getUsername();
-        String name = customUserDetails.getResponseDto().getClientName();
         String role = authResult.getAuthorities().iterator().next().getAuthority();
-        String refresh = jwtUtils.createRefreshToken(email, name, role);
+        String uuid = UUID.randomUUID().toString();
+        String refresh = jwtUtils.createRefreshToken(uuid, role);
+        TokenResponseDto tokenResponse = new TokenResponseDto(jwtUtils.createAccessToken(uuid, role), refresh);
 
-        addRefreshToken(email, name, role, refresh);
+        addRefreshToken(email, uuid.toString(), refresh);
 
-        response.addHeader("access", jwtUtils.createAccessToken(email, name, role));
-        response.addHeader("refresh", refresh);
-        response.setHeader("name", name);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
         response.setStatus(HttpStatus.OK.value());
+        response.getWriter().write(new ObjectMapper().writeValueAsString(tokenResponse));
     }
 
     @Override
@@ -71,8 +68,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setStatus(401);
     }
 
-    public void addRefreshToken(String email, String name, String role, String refresh) {
-        redisTemplate.opsForHash().put(refresh, RedisUtils.getTokenPrefix(), email);
+    public void addRefreshToken(String email, String uuid, String refresh) {
+        redisTemplate.opsForHash().put(refresh, uuid, email);
         redisTemplate.expire(refresh, 14, TimeUnit.DAYS);
     }
 }

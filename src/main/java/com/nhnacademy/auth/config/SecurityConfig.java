@@ -1,6 +1,5 @@
 package com.nhnacademy.auth.config;
 
-import com.nhnacademy.auth.filter.JWTFilter;
 import com.nhnacademy.auth.filter.LoginFilter;
 import com.nhnacademy.auth.utils.JWTUtils;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +39,6 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new JWTFilter(jwtUtils), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtils, redisTemplate), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new com.nhnacademy.auth.filter.LogoutFilter(jwtUtils, redisTemplate), LogoutFilter.class);
 
