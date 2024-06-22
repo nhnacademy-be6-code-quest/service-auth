@@ -1,21 +1,17 @@
 package com.nhnacademy.auth.controller;
 
-import com.nhnacademy.auth.domain.RefreshEntity;
-import com.nhnacademy.auth.domain.Role;
-import com.nhnacademy.auth.dto.ClientLoginResponseDto;
+import com.nhnacademy.auth.dto.TokenResponseDto;
 import com.nhnacademy.auth.utils.JWTUtils;
-import com.nhnacademy.auth.utils.RedisUtils;
-import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -26,40 +22,27 @@ public class ReissueController {
     private final RedisTemplate<String, String> redisTemplate;
 
     @PostMapping("/reissue")
-    public ResponseEntity<ClientLoginResponseDto> reissue(@RequestHeader("refresh") String refresh) {
+    public ResponseEntity<TokenResponseDto> reissue(@RequestHeader("refresh") String refresh) {
         if (refresh == null) {
             log.error("refresh is null");
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
-
-        try {
-            jwtUtils.isExpired(refresh);
-        } catch (ExpiredJwtException e) {
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        } else if (jwtUtils.isExpired(refresh)) {
             log.error("refresh expired token");
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
-
-        String rf = (String) redisTemplate.opsForHash().get(refresh, RedisUtils.getTokenPrefix());
-        if (rf == null) {
+        String email = (String) redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh));
+        if (email == null) {
             log.error("refresh expired token");
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
 
-        String email = jwtUtils.getUserEmail(refresh);
-        String name = jwtUtils.getUserName(refresh);
+        String uuid = UUID.randomUUID().toString();
         String role = jwtUtils.getRole(refresh);
-        String newRefresh = jwtUtils.createRefreshToken(email, name, role);
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("access", jwtUtils.createAccessToken(email, name, role));
-        headers.set("refresh", newRefresh);
+        String newRefresh = jwtUtils.createRefreshToken(uuid, role);
 
         redisTemplate.delete(refresh);
-        redisTemplate.opsForHash().put(newRefresh, RedisUtils.getTokenPrefix(), rf);
+        redisTemplate.opsForHash().put(newRefresh, uuid, email);
         redisTemplate.expire(newRefresh, 14, TimeUnit.DAYS);
-        return new ResponseEntity<>(ClientLoginResponseDto.builder()
-                .clientEmail(email)
-                .clientName(name)
-                .role(Role.valueOf(role))
-                .build(), headers, HttpStatus.OK);
+        return new ResponseEntity<>(new TokenResponseDto(jwtUtils.createAccessToken(uuid, role), newRefresh), HttpStatus.OK);
     }
 }

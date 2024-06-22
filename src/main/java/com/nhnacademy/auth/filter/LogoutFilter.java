@@ -1,14 +1,10 @@
 package com.nhnacademy.auth.filter;
 
-import com.nhnacademy.auth.domain.RefreshEntity;
 import com.nhnacademy.auth.utils.JWTUtils;
-import com.nhnacademy.auth.utils.RedisUtils;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -31,44 +27,22 @@ public class LogoutFilter extends GenericFilterBean {
     }
 
     private void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-        String requestUri = request.getRequestURI();
-        if (!requestUri.matches("^\\/logout$")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-        String requestMethod = request.getMethod();
-        if (!requestMethod.equals("POST")) {
+        if (!(request.getRequestURI().matches("^\\/logout$") && request.getMethod().equals("POST"))) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String refresh = request.getHeader("refresh");
-        if (refresh == null) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        if (refresh == null || jwtUtils.isExpired(refresh) || !jwtUtils.getCategory(refresh).equals("refresh")) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
-        try {
-            jwtUtils.isExpired(refresh);
-        } catch (ExpiredJwtException e) {
-            //response status code
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-
-        String category = jwtUtils.getCategory(refresh);
-        if (!category.equals("refresh")) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-
-        //RefreshEntity rf = (RefreshEntity) redisTemplate.opsForHash().get(refresh, RedisUtils.getTokenPrefix());
-        String rf = (String) redisTemplate.opsForHash().get(refresh, RedisUtils.getTokenPrefix());
+        String rf = (String) redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh));
         if (rf == null) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
-
         redisTemplate.delete(refresh);
         response.setStatus(HttpServletResponse.SC_OK);
     }
