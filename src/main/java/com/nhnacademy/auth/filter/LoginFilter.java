@@ -69,6 +69,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     }
 
     public void addRefreshToken(String email, String uuid, String refresh) {
+        redisTemplate.delete(refresh);
         redisTemplate.opsForHash().put(refresh, uuid, email);
         redisTemplate.expire(refresh, 14, TimeUnit.DAYS);
     }
