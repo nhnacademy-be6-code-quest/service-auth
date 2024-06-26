@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.jwt.access.expiredMs=604800000", // in milliseconds
         "spring.jwt.refresh.expiredMs=31536000000" // in milliseconds
 })
-public class JWTUtilsTest {
+class JWTUtilsTest {
 
     @Value("${spring.jwt.secret}")
     private String secret;

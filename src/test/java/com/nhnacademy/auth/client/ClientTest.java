@@ -3,7 +3,6 @@ package com.nhnacademy.auth.client;
 import com.nhnacademy.auth.dto.ClientLoginResponseDto;
 import com.nhnacademy.auth.domain.Role;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -14,7 +13,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
-public class ClientTest {
+class ClientTest {
 
     @Autowired
     private Client client;

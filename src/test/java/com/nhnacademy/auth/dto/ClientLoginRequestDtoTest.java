@@ -3,7 +3,7 @@ package com.nhnacademy.auth.dto;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ClientLoginRequestDtoTest {
+class ClientLoginRequestDtoTest {
 
     @Test
     public void testNoArgsConstructor() {

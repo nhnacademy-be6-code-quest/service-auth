@@ -19,10 +19,11 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class ReissueController {
     private final JWTUtils jwtUtils;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @PostMapping("/reissue")
     public ResponseEntity<TokenResponseDto> reissue(@RequestHeader("refresh") String refresh) {
+        Long id = null;
         if (refresh == null) {
             log.error("refresh is null");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
@@ -30,8 +31,10 @@ public class ReissueController {
             log.error("refresh expired token");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
-        Long id = (Long) redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh));
-        if (id == null) {
+
+        try {
+            id = Long.valueOf(String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh))));
+        } catch (NumberFormatException e) {
             log.error("refresh expired token");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
