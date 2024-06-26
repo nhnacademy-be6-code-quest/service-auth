@@ -38,7 +38,7 @@ public class LogoutFilter extends GenericFilterBean {
             return;
         }
 
-        String rf = (String) redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh));
+        String rf = String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh)));
         if (rf == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
