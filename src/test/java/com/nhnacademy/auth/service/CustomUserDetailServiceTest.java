@@ -16,7 +16,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
-public class CustomUserDetailServiceTest {
+class CustomUserDetailServiceTest {
 
     @Autowired
     private CustomUserDetailService customUserDetailService;

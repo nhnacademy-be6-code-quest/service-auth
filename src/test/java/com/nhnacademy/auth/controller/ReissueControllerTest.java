@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ReissueController.class)
-public class ReissueControllerTest {
+class ReissueControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

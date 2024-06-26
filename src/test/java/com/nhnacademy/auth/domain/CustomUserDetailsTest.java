@@ -9,7 +9,7 @@ import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CustomUserDetailsTest {
+class CustomUserDetailsTest {
 
     private CustomUserDetails customUserDetails;
     private ClientLoginResponseDto clientLoginResponseDto;
