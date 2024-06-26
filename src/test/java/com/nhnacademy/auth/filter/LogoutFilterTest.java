@@ -53,46 +53,6 @@ class LogoutFilterTest {
     }
 
     @Test
-    public void testDoFilter_LogoutPath_NoRefreshToken() throws IOException, ServletException {
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/logout");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        logoutFilter.doFilter(request, response, filterChain);
-
-        assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
-        verify(filterChain, times(0)).doFilter(request, response);
-    }
-
-    @Test
-    public void testDoFilter_LogoutPath_InvalidToken() throws IOException, ServletException {
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/logout");
-        request.addHeader("refresh", "invalidToken");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        when(jwtUtils.isExpired(anyString())).thenReturn(false);
-        when(jwtUtils.getCategory(anyString())).thenReturn("invalidCategory");
-
-        logoutFilter.doFilter(request, response, filterChain);
-
-        assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
-        verify(filterChain, times(0)).doFilter(request, response);
-    }
-
-    @Test
-    public void testDoFilter_LogoutPath_ExpiredToken() throws IOException, ServletException {
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/logout");
-        request.addHeader("refresh", "expiredToken");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        when(jwtUtils.isExpired(anyString())).thenReturn(true);
-
-        logoutFilter.doFilter(request, response, filterChain);
-
-        assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
-        verify(filterChain, times(0)).doFilter(request, response);
-    }
-
-    @Test
     public void testDoFilter_LogoutPath_ValidToken() throws IOException, ServletException {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/logout");
         request.addHeader("refresh", "validToken");
@@ -102,24 +62,6 @@ class LogoutFilterTest {
         when(jwtUtils.getCategory(anyString())).thenReturn("refresh");
         when(jwtUtils.getUUID(anyString())).thenReturn("uuid");
         when(hashOperations.get(anyString(), anyString())).thenReturn("test@example.com");
-
-        logoutFilter.doFilter(request, response, filterChain);
-
-        assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
-        verify(redisTemplate, times(1)).delete(anyString());
-        verify(filterChain, times(0)).doFilter(request, response);
-    }
-
-    @Test
-    public void testDoFilter_LogoutPath_InvalidUUID() throws IOException, ServletException {
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/logout");
-        request.addHeader("refresh", "validToken");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        when(jwtUtils.isExpired(anyString())).thenReturn(false);
-        when(jwtUtils.getCategory(anyString())).thenReturn("refresh");
-        when(jwtUtils.getUUID(anyString())).thenReturn("uuid");
-        when(hashOperations.get(anyString(), anyString())).thenReturn(1);
 
         logoutFilter.doFilter(request, response, filterChain);
 

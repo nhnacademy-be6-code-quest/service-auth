@@ -33,17 +33,9 @@ public class LogoutFilter extends GenericFilterBean {
         }
 
         String refresh = request.getHeader("refresh");
-        if (refresh == null || jwtUtils.isExpired(refresh) || !jwtUtils.getCategory(refresh).equals("refresh")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
+        if (redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh)) != null) {
+            redisTemplate.delete(refresh);
         }
-
-        String rf = String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh)));
-        if (rf == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
-        }
-        redisTemplate.delete(refresh);
         response.setStatus(HttpServletResponse.SC_OK);
     }
 }
