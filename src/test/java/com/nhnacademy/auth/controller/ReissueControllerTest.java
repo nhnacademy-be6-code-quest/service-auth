@@ -31,7 +31,7 @@ class ReissueControllerTest {
     private JWTUtils jwtUtils;
 
     @MockBean
-    private RedisTemplate<String, String> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Mock
     private HashOperations<String, Object, Object> hashOperations;
