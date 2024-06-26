@@ -49,13 +49,13 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         CustomUserDetails customUserDetails = (CustomUserDetails) authResult.getPrincipal();
-        String email = customUserDetails.getUsername();
+        Long userId = customUserDetails.getResponseDto().getClientId();
         String role = authResult.getAuthorities().iterator().next().getAuthority();
         String uuid = UUID.randomUUID().toString();
         String refresh = jwtUtils.createRefreshToken(uuid, role);
         TokenResponseDto tokenResponse = new TokenResponseDto(jwtUtils.createAccessToken(uuid, role), refresh);
 
-        addRefreshToken(email, uuid.toString(), refresh);
+        addRefreshToken(userId, uuid, refresh);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -68,9 +68,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setStatus(401);
     }
 
-    public void addRefreshToken(String email, String uuid, String refresh) {
+    public void addRefreshToken(Long userId, String uuid, String refresh) {
         redisTemplate.delete(refresh);
-        redisTemplate.opsForHash().put(refresh, uuid, email);
+        redisTemplate.opsForHash().put(refresh, uuid, userId);
         redisTemplate.expire(refresh, 14, TimeUnit.DAYS);
     }
 }

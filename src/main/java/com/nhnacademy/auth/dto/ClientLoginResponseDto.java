@@ -9,6 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 public class ClientLoginResponseDto {
     private Role role;
+    private Long clientId;
     private String clientEmail;
     private String clientPassword;
     private String clientName;

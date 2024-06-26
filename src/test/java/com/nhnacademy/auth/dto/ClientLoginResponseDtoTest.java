@@ -9,7 +9,7 @@ public class ClientLoginResponseDtoTest {
 
     @Test
     public void testAllArgsConstructor() {
-        ClientLoginResponseDto dto = new ClientLoginResponseDto(Role.ROLE_USER, "test@example.com", "password", "Test User");
+        ClientLoginResponseDto dto = new ClientLoginResponseDto(Role.ROLE_USER, 1L, "test@example.com", "password", "Test User");
 
         assertThat(dto.getRole()).isEqualTo(Role.ROLE_USER);
         assertThat(dto.getClientEmail()).isEqualTo("test@example.com");
@@ -34,7 +34,7 @@ public class ClientLoginResponseDtoTest {
 
     @Test
     public void testSettersAndGetters() {
-        ClientLoginResponseDto dto = new ClientLoginResponseDto(Role.ROLE_USER, "test@example.com", "password", "Test User");
+        ClientLoginResponseDto dto = new ClientLoginResponseDto(Role.ROLE_USER, 1L, "test@example.com", "password", "Test User");
 
         dto.setRole(Role.ROLE_ADMIN);
         dto.setClientEmail("new@example.com");
