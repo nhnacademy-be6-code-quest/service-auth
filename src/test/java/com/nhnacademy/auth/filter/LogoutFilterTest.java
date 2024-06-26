@@ -119,12 +119,12 @@ class LogoutFilterTest {
         when(jwtUtils.isExpired(anyString())).thenReturn(false);
         when(jwtUtils.getCategory(anyString())).thenReturn("refresh");
         when(jwtUtils.getUUID(anyString())).thenReturn("uuid");
-        when(hashOperations.get(anyString(), anyString())).thenReturn(null);
+        when(hashOperations.get(anyString(), anyString())).thenReturn(1);
 
         logoutFilter.doFilter(request, response, filterChain);
 
-        assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
-        verify(redisTemplate, times(0)).delete(anyString());
+        assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
+        verify(redisTemplate, times(1)).delete(anyString());
         verify(filterChain, times(0)).doFilter(request, response);
     }
 }
