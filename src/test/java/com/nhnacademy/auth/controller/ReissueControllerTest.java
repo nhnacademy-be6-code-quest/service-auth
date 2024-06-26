@@ -87,7 +87,7 @@ public class ReissueControllerTest {
     @WithMockUser
     public void testReissue_ValidRefreshToken() throws Exception {
         String validToken = "validToken";
-        String email = "test@example.com";
+        Long id = 1L;
         String uuid = UUID.randomUUID().toString();
         String newUuid = UUID.randomUUID().toString();
         String role = "ROLE_USER";
@@ -96,7 +96,7 @@ public class ReissueControllerTest {
 
         when(jwtUtils.isExpired(validToken)).thenReturn(false);
         when(jwtUtils.getUUID(validToken)).thenReturn(uuid);
-        when(hashOperations.get(validToken, uuid)).thenReturn(email);
+        when(hashOperations.get(validToken, uuid)).thenReturn(id);
         when(jwtUtils.getRole(validToken)).thenReturn(role);
         when(jwtUtils.createRefreshToken(anyString(), anyString())).thenReturn(newRefreshToken);
         when(jwtUtils.createAccessToken(anyString(), anyString())).thenReturn(newAccessToken);

@@ -123,13 +123,13 @@ public class LoginFilterTest {
 
     @Test
     public void testAddRefreshToken() {
-        String email = "test@example.com";
+        Long id = 1L;
         String uuid = UUID.randomUUID().toString();
         String refresh = "refreshToken";
 
-        loginFilter.addRefreshToken(email, uuid, refresh);
+        loginFilter.addRefreshToken(id, uuid, refresh);
 
-        verify(hashOperations, times(1)).put(refresh, uuid, email);
+        verify(hashOperations, times(1)).put(refresh, uuid, id);
         verify(redisTemplate, times(1)).expire(refresh, 14, TimeUnit.DAYS);
     }
 }

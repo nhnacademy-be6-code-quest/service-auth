@@ -30,8 +30,8 @@ public class ReissueController {
             log.error("refresh expired token");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
-        String email = (String) redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh));
-        if (email == null) {
+        Long id = (Long) redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh));
+        if (id == null) {
             log.error("refresh expired token");
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         }
@@ -41,7 +41,7 @@ public class ReissueController {
         String newRefresh = jwtUtils.createRefreshToken(uuid, role);
 
         redisTemplate.delete(refresh);
-        redisTemplate.opsForHash().put(newRefresh, uuid, email);
+        redisTemplate.opsForHash().put(newRefresh, uuid, id);
         redisTemplate.expire(newRefresh, 14, TimeUnit.DAYS);
         return new ResponseEntity<>(new TokenResponseDto(jwtUtils.createAccessToken(uuid, role), newRefresh), HttpStatus.OK);
     }

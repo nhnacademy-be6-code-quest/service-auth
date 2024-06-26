@@ -25,7 +25,7 @@ public class ClientTest {
     @Test
     public void testLogin() {
         // Mocking the Client interface
-        ClientLoginResponseDto responseDto = new ClientLoginResponseDto(Role.ROLE_USER, "test@example.com", "password", "Test User");
+        ClientLoginResponseDto responseDto = new ClientLoginResponseDto(Role.ROLE_USER, 1L, "test@example.com", "password", "Test User");
         ResponseEntity<ClientLoginResponseDto> responseEntity = ResponseEntity.ok(responseDto);
 
         when(mockClient.login(anyString())).thenReturn(responseEntity);
