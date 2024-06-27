@@ -1,4 +1,4 @@
-package com.nhnacademy.auth.dto;
+package com.nhnacademy.auth.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

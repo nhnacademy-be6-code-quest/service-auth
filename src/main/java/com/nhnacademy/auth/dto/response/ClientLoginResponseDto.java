@@ -1,6 +1,5 @@
-package com.nhnacademy.auth.dto;
+package com.nhnacademy.auth.dto.response;
 
-import com.nhnacademy.auth.domain.Role;
 import lombok.*;
 
 @Getter

@@ -1,7 +1,7 @@
 package com.nhnacademy.auth.client;
 
-import com.nhnacademy.auth.dto.ClientLoginResponseDto;
-import com.nhnacademy.auth.domain.Role;
+import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
+import com.nhnacademy.auth.dto.response.Role;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
