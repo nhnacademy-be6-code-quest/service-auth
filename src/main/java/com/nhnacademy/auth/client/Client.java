@@ -1,6 +1,6 @@
 package com.nhnacademy.auth.client;
 
-import com.nhnacademy.auth.dto.ClientLoginResponseDto;
+import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

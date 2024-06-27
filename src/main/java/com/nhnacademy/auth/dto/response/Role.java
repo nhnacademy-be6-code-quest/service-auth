@@ -1,4 +1,4 @@
-package com.nhnacademy.auth.domain;
+package com.nhnacademy.auth.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.nhnacademy.auth.exception.UnknownRoleException;

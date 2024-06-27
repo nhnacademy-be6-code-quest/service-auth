@@ -1,6 +1,7 @@
 package com.nhnacademy.auth.dto;
 
-import com.nhnacademy.auth.domain.Role;
+import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
+import com.nhnacademy.auth.dto.response.Role;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

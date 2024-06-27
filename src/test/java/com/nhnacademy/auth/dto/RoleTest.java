@@ -1,5 +1,6 @@
-package com.nhnacademy.auth.domain;
+package com.nhnacademy.auth.dto;
 
+import com.nhnacademy.auth.dto.response.Role;
 import com.nhnacademy.auth.exception.UnknownRoleException;
 import org.junit.jupiter.api.Test;
 
