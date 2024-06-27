@@ -7,6 +7,7 @@ import com.nhnacademy.auth.dto.response.TokenResponseDto;
 import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
 import com.nhnacademy.auth.utils.JWTUtils;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,8 +57,13 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     public TokenResponseDto login(String clientEmail, String clientPassword) {
-        ClientLoginResponseDto response = client.login(clientEmail).getBody();
-        if (response == null || !passwordEncoder.matches(clientPassword, response.getClientPassword())) {
+        ClientLoginResponseDto response;
+        try {
+            response = client.login(clientEmail).getBody();
+        } catch (FeignException e) {
+            throw new LoginFailException("client login fail");
+        }
+        if (!passwordEncoder.matches(clientPassword, response.getClientPassword())) {
             throw new LoginFailException("client login fail");
         }
         Long userId = response.getClientId();
