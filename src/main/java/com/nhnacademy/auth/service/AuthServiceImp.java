@@ -92,6 +92,5 @@ public class AuthServiceImp implements AuthService {
 
         log.info("send login Message");
         rabbitTemplate.convertAndSend(loginExchangeName, loginRoutingKey, new ClientLoginMessageDto(userId, LocalDateTime.now()));
-        log.info("finish login Message");
     }
 }
