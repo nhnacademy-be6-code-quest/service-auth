@@ -1,13 +1,18 @@
 package com.nhnacademy.auth.dto.response;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 public class ClientLoginResponseDto {
-    private Role role;
+    private List<String> role;
     private Long clientId;
     private String clientEmail;
     private String clientPassword;

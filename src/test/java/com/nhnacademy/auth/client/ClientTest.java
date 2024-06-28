@@ -1,12 +1,13 @@
 package com.nhnacademy.auth.client;
 
 import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
-import com.nhnacademy.auth.dto.response.Role;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -23,8 +24,9 @@ class ClientTest {
 
     @Test
     public void testLogin() {
+        List<String> roles = List.of("ROLE_USER");
         // Mocking the Client interface
-        ClientLoginResponseDto responseDto = new ClientLoginResponseDto(Role.ROLE_USER, 1L, "test@example.com", "password", "Test User");
+        ClientLoginResponseDto responseDto = new ClientLoginResponseDto(roles, 1L, "test@example.com", "password", "Test User");
         ResponseEntity<ClientLoginResponseDto> responseEntity = ResponseEntity.ok(responseDto);
 
         when(mockClient.login(anyString())).thenReturn(responseEntity);
@@ -37,6 +39,6 @@ class ClientTest {
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getClientEmail()).isEqualTo("test@example.com");
         assertThat(result.getBody().getClientName()).isEqualTo("Test User");
-        assertThat(result.getBody().getRole()).isEqualTo(Role.ROLE_USER);
+        assertThat(result.getBody().getRole()).isEqualTo(roles);
     }
 }
