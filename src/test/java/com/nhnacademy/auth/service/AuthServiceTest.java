@@ -2,7 +2,6 @@ package com.nhnacademy.auth.service;
 
 import com.nhnacademy.auth.client.Client;
 import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
-import com.nhnacademy.auth.dto.response.Role;
 import com.nhnacademy.auth.dto.response.TokenResponseDto;
 import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
@@ -18,6 +17,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -63,9 +63,9 @@ public class AuthServiceTest {
         when(jwtUtils.isExpired(refresh)).thenReturn(false);
         when(jwtUtils.getUUID(refresh)).thenReturn(uuid);
         when(hashOperations.get(refresh, uuid)).thenReturn(userId);
-        when(jwtUtils.getRole(refresh)).thenReturn(role);
-        when(jwtUtils.createRefreshToken(anyString(), eq(role))).thenReturn("new_refresh_token");
-        when(jwtUtils.createAccessToken(anyString(), eq(role))).thenReturn("new_access_token");
+        when(jwtUtils.getRole(refresh)).thenReturn(List.of(role));
+        when(jwtUtils.createRefreshToken(anyString(), eq(List.of(role)))).thenReturn("new_refresh_token");
+        when(jwtUtils.createAccessToken(anyString(), eq(List.of(role)))).thenReturn("new_access_token");
 
         TokenResponseDto tokenResponseDto = authServiceImp.reissue(refresh);
 
@@ -95,12 +95,12 @@ public class AuthServiceTest {
         Long userId = 1L;
         String role = "ROLE_USER";
         String uuid = UUID.randomUUID().toString();
-        ClientLoginResponseDto responseDto = new ClientLoginResponseDto(Role.valueOf(role), userId, clientEmail, encodedPassword, "hi");
+        ClientLoginResponseDto responseDto = new ClientLoginResponseDto(List.of(role), userId, clientEmail, encodedPassword, "hi");
 
         when(client.login(clientEmail)).thenReturn(ResponseEntity.ok(responseDto));
         when(passwordEncoder.matches(clientPassword, encodedPassword)).thenReturn(true);
-        when(jwtUtils.createRefreshToken(anyString(), eq(role))).thenReturn("new_refresh_token");
-        when(jwtUtils.createAccessToken(anyString(), eq(role))).thenReturn("new_access_token");
+        when(jwtUtils.createRefreshToken(anyString(), eq(List.of(role)))).thenReturn("new_refresh_token");
+        when(jwtUtils.createAccessToken(anyString(), eq(List.of(role)))).thenReturn("new_access_token");
 
         TokenResponseDto tokenResponseDto = authServiceImp.login(clientEmail, clientPassword);
 
@@ -118,7 +118,7 @@ public class AuthServiceTest {
         String clientEmail = "test@example.com";
         String clientPassword = "wrong_password";
         String encodedPassword = "encoded_password";
-        ClientLoginResponseDto responseDto = new ClientLoginResponseDto(Role.ROLE_USER, 1L, clientEmail, encodedPassword, "hi");
+        ClientLoginResponseDto responseDto = new ClientLoginResponseDto(List.of("ROLE_USER"), 1L, clientEmail, encodedPassword, "hi");
 
         when(client.login(clientEmail)).thenReturn(ResponseEntity.ok(responseDto));
         when(passwordEncoder.matches(clientPassword, encodedPassword)).thenReturn(false);

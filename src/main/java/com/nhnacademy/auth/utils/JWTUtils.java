@@ -10,7 +10,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.UUID;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -36,8 +36,8 @@ public class JWTUtils {
         return getClaimsFromToken(token).get("uuid", String.class);
     }
 
-    public String getRole(String token) {
-        return getClaimsFromToken(token).get("role", String.class);
+    public List<String> getRole(String token) {
+        return getClaimsFromToken(token).get("role", List.class);
     }
 
     public boolean isExpired(String token) {
@@ -53,19 +53,19 @@ public class JWTUtils {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
     }
 
-    public String createAccessToken(String uuid, String role) {
-        return createJwt("access", uuid, role, accessExpiredMs);
+    public String createAccessToken(String uuid, List<String> roles) {
+        return createJwt("access", uuid, roles, accessExpiredMs);
     }
 
-    public String createRefreshToken(String uuid, String role) {
-        return createJwt("refresh", uuid, role, refreshExpiredMs);
+    public String createRefreshToken(String uuid, List<String> roles) {
+        return createJwt("refresh", uuid, roles, refreshExpiredMs);
     }
 
-    public String createJwt(String category, String uuid, String role, Long expiredMs) {
+    public String createJwt(String category, String uuid, List<String> roles, Long expiredMs) {
         return Jwts.builder()
                 .claim("category", category)
                 .claim("uuid", uuid)
-                .claim("role", role)
+                .claim("role", roles)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(secretKey)

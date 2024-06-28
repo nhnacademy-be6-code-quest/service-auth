@@ -9,6 +9,7 @@ import com.nhnacademy.auth.exception.TokenInvalidationException;
 import com.nhnacademy.auth.utils.JWTUtils;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -16,9 +17,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImp implements AuthService {
@@ -48,11 +51,11 @@ public class AuthServiceImp implements AuthService {
         }
 
         String uuid = UUID.randomUUID().toString();
-        String role = jwtUtils.getRole(refresh);
-        String newRefresh = jwtUtils.createRefreshToken(uuid, role);
+        List<String> roles = jwtUtils.getRole(refresh);
+        String newRefresh = jwtUtils.createRefreshToken(uuid, roles);
         redisTemplate.delete(refresh);
         addRefreshToken(id, uuid, newRefresh);
-        return new TokenResponseDto(jwtUtils.createAccessToken(uuid, role), newRefresh);
+        return new TokenResponseDto(jwtUtils.createAccessToken(uuid, roles), newRefresh);
     }
 
     @Override
@@ -67,11 +70,11 @@ public class AuthServiceImp implements AuthService {
             throw new LoginFailException("client login fail");
         }
         Long userId = response.getClientId();
-        String role = response.getRole().getAuthority();
+        List<String> roles = response.getRole();
         String uuid = UUID.randomUUID().toString();
-        String refresh = jwtUtils.createRefreshToken(uuid, role);
+        String refresh = jwtUtils.createRefreshToken(uuid, roles);
         addRefreshToken(userId, uuid, refresh);
-        return new TokenResponseDto(jwtUtils.createAccessToken(uuid, role), refresh);
+        return new TokenResponseDto(jwtUtils.createAccessToken(uuid, roles), refresh);
     }
 
     @Override
@@ -87,6 +90,8 @@ public class AuthServiceImp implements AuthService {
         redisTemplate.opsForHash().put(refresh, uuid, userId);
         redisTemplate.expire(refresh, 14, TimeUnit.DAYS);
 
+        log.info("send login Message");
         rabbitTemplate.convertAndSend(loginExchangeName, loginRoutingKey, new ClientLoginMessageDto(userId, LocalDateTime.now()));
+        log.info("finish login Message");
     }
 }

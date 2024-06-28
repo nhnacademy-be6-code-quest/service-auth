@@ -24,28 +24,33 @@ public class AuthControllerImp implements AuthController {
     @Override
     @PostMapping("/api/reissue")
     public ResponseEntity<TokenResponseDto> reissue(@RequestHeader("refresh") String refresh) {
+        log.info("reissue");
         return new ResponseEntity<>(authService.reissue(refresh), HttpStatus.OK);
     }
 
     @Override
     @PostMapping("/api/login")
     public ResponseEntity<TokenResponseDto> login(ClientLoginRequestDto clientLoginRequestDto) {
+        log.info("login");
         return new ResponseEntity<>(authService.login(clientLoginRequestDto.getClientEmail(), clientLoginRequestDto.getClientPassword()), HttpStatus.OK);
     }
 
     @Override
     @PostMapping("/api/logout")
     public ResponseEntity<String> logout(HttpHeaders headers) {
+        log.info("logout");
         return new ResponseEntity<>(authService.logout(headers.getFirst("refresh")), HttpStatus.OK);
     }
 
     @ExceptionHandler(TokenInvalidationException.class)
     public ResponseEntity<String> handleTokenInvalidationException(TokenInvalidationException e) {
+        log.error(e.getMessage());
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(LoginFailException.class)
     public ResponseEntity<String> handleLoginFailException(LoginFailException e) {
+        log.error(e.getMessage());
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 }

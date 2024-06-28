@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -38,7 +40,7 @@ class JWTUtilsTest {
         String role = "ROLE_USER";
         Long expiredMs = 1000L * 60 * 60; // 1 hour
 
-        String token = jwtUtils.createJwt("test", uuid, role, expiredMs);
+        String token = jwtUtils.createJwt("test", uuid, List.of(role), expiredMs);
 
         assertThat(token).isNotNull();
     }
@@ -50,7 +52,7 @@ class JWTUtilsTest {
         String category = "test";
         Long expiredMs = 1000L * 60 * 60; // 1 hour
 
-        String token = jwtUtils.createJwt(category, uuid, role, expiredMs);
+        String token = jwtUtils.createJwt(category, uuid, List.of(role), expiredMs);
         String extractedCategory = jwtUtils.getCategory(token);
 
         assertThat(extractedCategory).isEqualTo(category);
@@ -63,7 +65,7 @@ class JWTUtilsTest {
         String category = "test";
         Long expiredMs = 1000L * 60 * 60; // 1 hour
 
-        String token = jwtUtils.createJwt(category, uuid, role, expiredMs);
+        String token = jwtUtils.createJwt(category, uuid, List.of(role), expiredMs);
         String extractedUUID = jwtUtils.getUUID(token);
 
         assertThat(extractedUUID).isEqualTo(uuid);
@@ -76,10 +78,10 @@ class JWTUtilsTest {
         String category = "test";
         Long expiredMs = 1000L * 60 * 60; // 1 hour
 
-        String token = jwtUtils.createJwt(category, uuid, role, expiredMs);
-        String extractedRole = jwtUtils.getRole(token);
+        String token = jwtUtils.createJwt(category, uuid, List.of(role), expiredMs);
+        List<String> extractedRole = jwtUtils.getRole(token);
 
-        assertThat(extractedRole).isEqualTo(role);
+        assertThat(extractedRole).isEqualTo(List.of(role));
     }
 
     @Test
@@ -89,7 +91,7 @@ class JWTUtilsTest {
         String category = "test";
         Long expiredMs = 1000L * 60 * 60; // 1 hour
 
-        String token = jwtUtils.createJwt(category, uuid, role, expiredMs);
+        String token = jwtUtils.createJwt(category, uuid, List.of(role), expiredMs);
 
         assertThat(jwtUtils.isExpired(token)).isFalse();
     }
