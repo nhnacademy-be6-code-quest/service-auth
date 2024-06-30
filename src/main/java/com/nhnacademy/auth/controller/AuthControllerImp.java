@@ -1,6 +1,7 @@
 package com.nhnacademy.auth.controller;
 
 import com.nhnacademy.auth.dto.request.ClientLoginRequestDto;
+import com.nhnacademy.auth.dto.request.OAuthRegisterRequestDto;
 import com.nhnacademy.auth.dto.response.TokenResponseDto;
 import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
@@ -10,10 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -40,6 +38,25 @@ public class AuthControllerImp implements AuthController {
     public ResponseEntity<String> logout(HttpHeaders headers) {
         log.info("logout");
         return new ResponseEntity<>(authService.logout(headers.getFirst("refresh")), HttpStatus.OK);
+    }
+
+    @Override
+    @GetMapping("/api/payco/login/callback")
+    public ResponseEntity<TokenResponseDto> paycoLoginCallback(@RequestParam("code") String code) {
+        log.info("payco login callback");
+        return ResponseEntity.ok(authService.paycoOAuthLogin(code));
+    }
+
+    @Override
+    @PostMapping("/api/oauth")
+    public ResponseEntity<TokenResponseDto> oAuthRegister(@RequestBody OAuthRegisterRequestDto oAuthRegisterRequestDto) {
+        log.info("oAuthRegister");
+        return ResponseEntity.ok(authService.oAuthRegister(
+                        oAuthRegisterRequestDto.getAccess(),
+                        oAuthRegisterRequestDto.getName(),
+                        oAuthRegisterRequestDto.getBirth()
+                )
+        );
     }
 
     @ExceptionHandler(TokenInvalidationException.class)

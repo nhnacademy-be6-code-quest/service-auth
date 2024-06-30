@@ -2,7 +2,11 @@ package com.nhnacademy.auth.service;
 
 import com.nhnacademy.auth.client.Client;
 import com.nhnacademy.auth.dto.message.ClientLoginMessageDto;
+import com.nhnacademy.auth.dto.request.ClientOAuthRegisterRequestDto;
+import com.nhnacademy.auth.dto.request.OAuthRegisterRequestDto;
 import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
+import com.nhnacademy.auth.dto.response.PaycoOAuthResponseDto;
+import com.nhnacademy.auth.dto.response.PaycoUserInfoResponseDto;
 import com.nhnacademy.auth.dto.response.TokenResponseDto;
 import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
@@ -13,9 +17,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +34,18 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImp implements AuthService {
+    private static final String PAYCO_PREFIX = "payco_";
+
+    @Value("${payco.client.id}")
+    private String paycoClientId;
+    @Value("${payco.client.secret}")
+    private String paycoClientSecret;
+    @Value("${payco.token.uri}")
+    private String paycoTokenUri;
+    @Value("${payco.user-info.uri}")
+    private String paycoUserInfoUri;
+    @Value("${payco.logout.uri}")
+    private String paycoLogoutUri;
     @Value("${rabbit.login.exchange.name}")
     private String loginExchangeName;
     @Value("${rabbit.login.routing.key}")
@@ -32,6 +53,7 @@ public class AuthServiceImp implements AuthService {
 
     private final Client client;
     private final JWTUtils jwtUtils;
+    private final RestTemplate restTemplate;
     private final RabbitTemplate rabbitTemplate;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -83,6 +105,64 @@ public class AuthServiceImp implements AuthService {
             redisTemplate.delete(refresh);
         }
         return "Success";
+    }
+
+    @Override
+    public TokenResponseDto paycoOAuthLogin(String code) {
+        TokenResponseDto response;
+
+        ResponseEntity<PaycoOAuthResponseDto> tokenResponse = restTemplate.getForEntity(getPaycoTokenUri(code), PaycoOAuthResponseDto.class);
+        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+            return null;
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("client_id", paycoClientId);
+        headers.set("access_token", tokenResponse.getBody().getAccessToken());
+        ResponseEntity<PaycoUserInfoResponseDto> userInfoResponse = restTemplate.postForEntity(paycoUserInfoUri, new HttpEntity<>(null, headers), PaycoUserInfoResponseDto.class);
+        if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
+            return null;
+        }
+        String identifier = PAYCO_PREFIX + userInfoResponse.getBody().getData().getMember().getIdNo();
+
+        try {
+            ClientLoginResponseDto loginInfo = client.login(identifier).getBody();
+            response = new TokenResponseDto(
+                    jwtUtils.createAccessToken(identifier, loginInfo.getRole()),
+                    jwtUtils.createRefreshToken(identifier, loginInfo.getRole())
+            );
+            addRefreshToken(loginInfo.getClientId(), identifier, response.getRefresh());
+        } catch (FeignException e) {
+            response = new TokenResponseDto(
+                    jwtUtils.createAccessToken(identifier, List.of("ROLE_OAUTH")),
+                    null
+            );
+        }
+        return response;
+    }
+
+    @Override
+    public TokenResponseDto oAuthRegister(String access, String name, LocalDate birth) {
+        String uuid = jwtUtils.getUUID(access);
+        client.createOauthClient(ClientOAuthRegisterRequestDto.builder()
+                .identify(uuid)
+                .name(name)
+                .birth(birth)
+                .build());
+
+        ClientLoginResponseDto response = client.login(uuid).getBody();
+        String accessToken = jwtUtils.createAccessToken(uuid, response.getRole());
+        String refreshToken = jwtUtils.createRefreshToken(uuid, response.getRole());
+        addRefreshToken(response.getClientId(), uuid, refreshToken);
+        return new TokenResponseDto(accessToken, refreshToken);
+    }
+
+    private String getPaycoTokenUri(String code) {
+        return paycoTokenUri +
+                "?grant_type=authorization_code" +
+                "&code=" + code +
+                "&client_id=" + paycoClientId +
+                "&client_secret=" + paycoClientSecret;
     }
 
     private void addRefreshToken(Long userId, String uuid, String refresh) {

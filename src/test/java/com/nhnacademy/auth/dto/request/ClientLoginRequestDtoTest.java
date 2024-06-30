@@ -1,7 +1,9 @@
-package com.nhnacademy.auth.dto;
+package com.nhnacademy.auth.dto.request;
 
-import com.nhnacademy.auth.dto.request.ClientLoginRequestDto;
 import org.junit.jupiter.api.Test;
+
+import java.io.*;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ClientLoginRequestDtoTest {

@@ -1,6 +1,5 @@
-package com.nhnacademy.auth.dto;
+package com.nhnacademy.auth.dto.response;
 
-import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
