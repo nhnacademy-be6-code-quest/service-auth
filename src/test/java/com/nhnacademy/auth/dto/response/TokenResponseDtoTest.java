@@ -37,7 +37,7 @@ class TokenResponseDtoTest {
 
         assertThat(dto1).isEqualTo(dto2);
         assertThat(dto1).isNotEqualTo(dto3);
-        assertThat(dto1.hashCode()).isEqualTo(dto2.hashCode());
+        assertThat(dto1.hashCode()).hasSameHashCodeAs(dto2.hashCode());
         assertThat(dto1.hashCode()).isNotEqualTo(dto3.hashCode());
     }
 }
