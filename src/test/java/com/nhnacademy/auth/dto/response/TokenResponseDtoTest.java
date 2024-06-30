@@ -26,7 +26,7 @@ class TokenResponseDtoTest {
     @Test
     void testToString() {
         TokenResponseDto dto = new TokenResponseDto("accessToken", "refreshToken");
-        assertThat(dto.toString()).isEqualTo("TokenResponseDto(access=accessToken, refresh=refreshToken)");
+        assertThat(dto.toString()).hasToString("TokenResponseDto(access=accessToken, refresh=refreshToken)");
     }
 
     @Test

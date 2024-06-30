@@ -3,7 +3,6 @@ package com.nhnacademy.auth.service;
 import com.nhnacademy.auth.client.Client;
 import com.nhnacademy.auth.dto.message.ClientLoginMessageDto;
 import com.nhnacademy.auth.dto.request.ClientOAuthRegisterRequestDto;
-import com.nhnacademy.auth.dto.request.OAuthRegisterRequestDto;
 import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
 import com.nhnacademy.auth.dto.response.PaycoOAuthResponseDto;
 import com.nhnacademy.auth.dto.response.PaycoUserInfoResponseDto;
@@ -44,8 +43,6 @@ public class AuthServiceImp implements AuthService {
     private String paycoTokenUri;
     @Value("${payco.user-info.uri}")
     private String paycoUserInfoUri;
-    @Value("${payco.logout.uri}")
-    private String paycoLogoutUri;
     @Value("${rabbit.login.exchange.name}")
     private String loginExchangeName;
     @Value("${rabbit.login.routing.key}")

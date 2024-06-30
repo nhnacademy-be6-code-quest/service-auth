@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class RestTemplateConfigTest {
+class RestTemplateConfigTest {
 
     @Autowired
     private ApplicationContext applicationContext;

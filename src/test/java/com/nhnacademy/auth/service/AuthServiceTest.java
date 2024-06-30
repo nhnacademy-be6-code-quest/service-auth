@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-public class AuthServiceTest {
+class AuthServiceTest {
 
     @Mock
     private Client client;
