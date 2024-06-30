@@ -1,15 +1,14 @@
 package com.nhnacademy.auth.controller;
 
 import com.nhnacademy.auth.dto.request.ClientLoginRequestDto;
+import com.nhnacademy.auth.dto.request.OAuthRegisterRequestDto;
 import com.nhnacademy.auth.dto.response.TokenResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Auth", description = "인증 관련 API")
 public interface AuthController {
@@ -59,4 +58,30 @@ public interface AuthController {
     )
     @PostMapping("/api/logout")
     ResponseEntity<String> logout(@RequestHeader HttpHeaders headers);
+
+    @Operation(
+            summary = "Payco Oauth 로그인 콜백 처리",
+            description = "paco - api 처리 및 토큰 발급",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "토큰 반환"
+                    ),
+            }
+    )
+    @GetMapping("/api/payco/login/callback")
+    ResponseEntity<TokenResponseDto> paycoLoginCallback(@RequestParam("code") String code);
+
+    @Operation(
+            summary = "Oauth 회원가입을 처리",
+            description = "oauth - 회원가입 처리 및 토큰 발급",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "토큰 반환"
+                    ),
+            }
+    )
+    @PostMapping("/api/oauth")
+    ResponseEntity<TokenResponseDto> oAuthRegister(OAuthRegisterRequestDto oAuthRegisterRequestDto);
 }
