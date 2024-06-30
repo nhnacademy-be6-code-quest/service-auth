@@ -1,6 +1,5 @@
 package com.nhnacademy.auth.service;
 
-import com.nhnacademy.auth.dto.request.OAuthRegisterRequestDto;
 import com.nhnacademy.auth.dto.response.TokenResponseDto;
 
 import java.time.LocalDate;
