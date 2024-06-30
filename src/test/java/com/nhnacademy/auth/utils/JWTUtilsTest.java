@@ -32,12 +32,12 @@ class JWTUtilsTest {
     private JWTUtils jwtUtils;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         jwtUtils = new JWTUtils(secret, accessExpiredMs, refreshExpiredMs);
     }
 
     @Test
-    public void testCreateJwt() {
+    void testCreateJwt() {
         String uuid = "123e4567-e89b-12d3-a456-426614174000";
         String role = "ROLE_USER";
         Long expiredMs = 1000L * 60 * 60; // 1 hour
@@ -48,7 +48,7 @@ class JWTUtilsTest {
     }
 
     @Test
-    public void testGetCategory() {
+    void testGetCategory() {
         String uuid = "123e4567-e89b-12d3-a456-426614174000";
         String role = "ROLE_USER";
         String category = "test";
@@ -61,7 +61,7 @@ class JWTUtilsTest {
     }
 
     @Test
-    public void testGetUUID() {
+    void testGetUUID() {
         String uuid = "123e4567-e89b-12d3-a456-426614174000";
         String role = "ROLE_USER";
         String category = "test";
@@ -74,7 +74,7 @@ class JWTUtilsTest {
     }
 
     @Test
-    public void testGetRole() {
+    void testGetRole() {
         String uuid = "123e4567-e89b-12d3-a456-426614174000";
         String role = "ROLE_USER";
         String category = "test";
@@ -87,7 +87,7 @@ class JWTUtilsTest {
     }
 
     @Test
-    public void testIsExpired() {
+    void testIsExpired() {
         String uuid = "123e4567-e89b-12d3-a456-426614174000";
         String role = "ROLE_USER";
         String category = "test";

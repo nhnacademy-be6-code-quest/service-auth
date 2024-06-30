@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class SwaggerConfigTest {
+class SwaggerConfigTest {
 
     @Autowired
     private ApplicationContext applicationContext;
