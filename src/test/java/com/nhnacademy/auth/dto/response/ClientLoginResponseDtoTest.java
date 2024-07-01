@@ -10,7 +10,7 @@ class ClientLoginResponseDtoTest {
     List<String> roles = List.of("ROLE_USER");
 
     @Test
-    public void testAllArgsConstructor() {
+    void testAllArgsConstructor() {
         ClientLoginResponseDto dto = new ClientLoginResponseDto(roles, 1L, "test@example.com", "password", "Test User");
 
         assertThat(dto.getRole()).isEqualTo(roles);
@@ -20,7 +20,7 @@ class ClientLoginResponseDtoTest {
     }
 
     @Test
-    public void testBuilder() {
+    void testBuilder() {
         ClientLoginResponseDto dto = ClientLoginResponseDto.builder()
                 .role(roles)
                 .clientEmail("test@example.com")
@@ -35,7 +35,7 @@ class ClientLoginResponseDtoTest {
     }
 
     @Test
-    public void testSettersAndGetters() {
+    void testSettersAndGetters() {
         ClientLoginResponseDto dto = new ClientLoginResponseDto(roles, 1L, "test@example.com", "password", "Test User");
 
         dto.setRole(List.of("ROLE_ADMIN"));

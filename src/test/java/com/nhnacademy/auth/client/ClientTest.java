@@ -29,7 +29,7 @@ class ClientTest {
     private Client mockClient;
 
     @Test
-    public void testLogin() {
+    void testLogin() {
         List<String> roles = List.of("ROLE_USER");
         // Mocking the Client interface
         ClientLoginResponseDto responseDto = new ClientLoginResponseDto(roles, 1L, "test@example.com", "password", "Test User");
