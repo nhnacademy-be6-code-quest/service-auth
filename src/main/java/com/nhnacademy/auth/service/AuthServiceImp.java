@@ -3,7 +3,6 @@ package com.nhnacademy.auth.service;
 import com.nhnacademy.auth.client.Client;
 import com.nhnacademy.auth.dto.message.ClientLoginMessageDto;
 import com.nhnacademy.auth.dto.request.ClientOAuthRegisterRequestDto;
-import com.nhnacademy.auth.dto.request.OAuthRegisterRequestDto;
 import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
 import com.nhnacademy.auth.dto.response.PaycoOAuthResponseDto;
 import com.nhnacademy.auth.dto.response.PaycoUserInfoResponseDto;
@@ -19,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,8 +44,6 @@ public class AuthServiceImp implements AuthService {
     private String paycoTokenUri;
     @Value("${payco.user-info.uri}")
     private String paycoUserInfoUri;
-    @Value("${payco.logout.uri}")
-    private String paycoLogoutUri;
     @Value("${rabbit.login.exchange.name}")
     private String loginExchangeName;
     @Value("${rabbit.login.routing.key}")
@@ -132,13 +130,39 @@ public class AuthServiceImp implements AuthService {
                     jwtUtils.createRefreshToken(identifier, loginInfo.getRole())
             );
             addRefreshToken(loginInfo.getClientId(), identifier, response.getRefresh());
-        } catch (FeignException e) {
+        } catch (FeignException.Unauthorized e) {
             response = new TokenResponseDto(
                     jwtUtils.createAccessToken(identifier, List.of("ROLE_OAUTH")),
                     null
             );
+        } catch (FeignException.Gone e) {
+            response = null;
         }
         return response;
+    }
+
+    @Override
+    public String paycoOAuthRecovery(String code) {
+        ResponseEntity<PaycoOAuthResponseDto> tokenResponse = restTemplate.getForEntity(getPaycoTokenUri(code), PaycoOAuthResponseDto.class);
+        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+            return null;
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("client_id", paycoClientId);
+        headers.set("access_token", tokenResponse.getBody().getAccessToken());
+        ResponseEntity<PaycoUserInfoResponseDto> userInfoResponse = restTemplate.postForEntity(paycoUserInfoUri, new HttpEntity<>(null, headers), PaycoUserInfoResponseDto.class);
+        if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
+            return null;
+        }
+        String identifier = PAYCO_PREFIX + userInfoResponse.getBody().getData().getMember().getIdNo();
+
+        try {
+            client.login(identifier);
+        } catch (FeignException.Gone e) {
+            return identifier;
+        }
+        return null;
     }
 
     @Override

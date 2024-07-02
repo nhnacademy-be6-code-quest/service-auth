@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 
 @Import(SecurityConfig.class)
 @WebMvcTest(AuthControllerImp.class)
-public class AuthControllerTest {
+class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -108,6 +108,17 @@ public class AuthControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.access").value("accessToken"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.refresh").value("refreshToken"))
+                .andDo(print());
+    }
+
+    @Test
+    void testPaycoRecoveryCallback() throws Exception {
+        when(authService.paycoOAuthRecovery(anyString())).thenReturn("identifier");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/payco/recovery/callback")
+                        .param("code", "valid_code"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().string("identifier"))
                 .andDo(print());
     }
 

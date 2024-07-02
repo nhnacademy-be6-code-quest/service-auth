@@ -26,7 +26,7 @@ class TokenResponseDtoTest {
     @Test
     void testToString() {
         TokenResponseDto dto = new TokenResponseDto("accessToken", "refreshToken");
-        assertThat(dto.toString()).isEqualTo("TokenResponseDto(access=accessToken, refresh=refreshToken)");
+        assertThat(dto.toString()).hasToString("TokenResponseDto(access=accessToken, refresh=refreshToken)");
     }
 
     @Test
@@ -35,9 +35,8 @@ class TokenResponseDtoTest {
         TokenResponseDto dto2 = new TokenResponseDto("accessToken", "refreshToken");
         TokenResponseDto dto3 = new TokenResponseDto("differentAccessToken", "differentRefreshToken");
 
-        assertThat(dto1).isEqualTo(dto2);
-        assertThat(dto1).isNotEqualTo(dto3);
-        assertThat(dto1.hashCode()).isEqualTo(dto2.hashCode());
+        assertThat(dto1).isEqualTo(dto2).isNotEqualTo(dto3);
+        assertThat(dto1.hashCode()).hasSameHashCodeAs(dto2.hashCode());
         assertThat(dto1.hashCode()).isNotEqualTo(dto3.hashCode());
     }
 }

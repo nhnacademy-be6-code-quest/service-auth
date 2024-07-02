@@ -73,6 +73,19 @@ public interface AuthController {
     ResponseEntity<TokenResponseDto> paycoLoginCallback(@RequestParam("code") String code);
 
     @Operation(
+            summary = "Payco Oauth 복구 콜백 처리",
+            description = "paco - api 처리 및 유저정보 반환",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "유저정보 반환"
+                    ),
+            }
+    )
+    @GetMapping("/api/payco/recovery/callback")
+    ResponseEntity<String> paycoRecoveryCallback(@RequestParam("code") String code);
+
+    @Operation(
             summary = "Oauth 회원가입을 처리",
             description = "oauth - 회원가입 처리 및 토큰 발급",
             responses = {

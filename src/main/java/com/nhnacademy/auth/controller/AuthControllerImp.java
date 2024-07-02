@@ -48,6 +48,13 @@ public class AuthControllerImp implements AuthController {
     }
 
     @Override
+    @GetMapping("/api/payco/recovery/callback")
+    public ResponseEntity<String> paycoRecoveryCallback(@RequestParam("code") String code) {
+        log.info("payco recovery callback");
+        return ResponseEntity.ok(authService.paycoOAuthRecovery(code));
+    }
+
+    @Override
     @PostMapping("/api/oauth")
     public ResponseEntity<TokenResponseDto> oAuthRegister(@RequestBody OAuthRegisterRequestDto oAuthRegisterRequestDto) {
         log.info("oAuthRegister");

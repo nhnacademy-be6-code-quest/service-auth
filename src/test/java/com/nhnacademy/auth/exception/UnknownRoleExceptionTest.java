@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class UnknownRoleExceptionTest {
 
     @Test
-    public void testExceptionMessage() {
+    void testExceptionMessage() {
         String errorMessage = "Invalid role: ROLE_UNKNOWN";
         UnknownRoleException exception = new UnknownRoleException(errorMessage);
 
@@ -16,7 +16,7 @@ class UnknownRoleExceptionTest {
     }
 
     @Test
-    public void testThrowException() {
+    void testThrowException() {
         String errorMessage = "Invalid role: ROLE_UNKNOWN";
 
         assertThatThrownBy(() -> {
