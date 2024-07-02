@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -129,13 +130,39 @@ public class AuthServiceImp implements AuthService {
                     jwtUtils.createRefreshToken(identifier, loginInfo.getRole())
             );
             addRefreshToken(loginInfo.getClientId(), identifier, response.getRefresh());
-        } catch (FeignException e) {
+        } catch (FeignException.Unauthorized e) {
             response = new TokenResponseDto(
                     jwtUtils.createAccessToken(identifier, List.of("ROLE_OAUTH")),
                     null
             );
+        } catch (FeignException.Gone e) {
+            response = null;
         }
         return response;
+    }
+
+    @Override
+    public String paycoOAuthRecovery(String code) {
+        ResponseEntity<PaycoOAuthResponseDto> tokenResponse = restTemplate.getForEntity(getPaycoTokenUri(code), PaycoOAuthResponseDto.class);
+        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+            return null;
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("client_id", paycoClientId);
+        headers.set("access_token", tokenResponse.getBody().getAccessToken());
+        ResponseEntity<PaycoUserInfoResponseDto> userInfoResponse = restTemplate.postForEntity(paycoUserInfoUri, new HttpEntity<>(null, headers), PaycoUserInfoResponseDto.class);
+        if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
+            return null;
+        }
+        String identifier = PAYCO_PREFIX + userInfoResponse.getBody().getData().getMember().getIdNo();
+
+        try {
+            client.login(identifier);
+        } catch (FeignException.Gone e) {
+            return identifier;
+        }
+        return null;
     }
 
     @Override
