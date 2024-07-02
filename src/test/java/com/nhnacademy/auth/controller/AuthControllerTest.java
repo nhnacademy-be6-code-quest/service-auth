@@ -112,6 +112,17 @@ class AuthControllerTest {
     }
 
     @Test
+    void testPaycoRecoveryCallback() throws Exception {
+        when(authService.paycoOAuthRecovery(anyString())).thenReturn("identifier");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/payco/recovery/callback")
+                        .param("code", "valid_code"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.content().string("identifier"))
+                .andDo(print());
+    }
+
+    @Test
     void testOAuthRegister() throws Exception {
         when(authService.oAuthRegister(anyString(), anyString(), any())).thenReturn(tokenResponseDto);
 

@@ -6,6 +6,9 @@ import com.nhnacademy.auth.dto.response.*;
 import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
 import com.nhnacademy.auth.utils.JWTUtils;
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,12 +20,14 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -186,6 +191,42 @@ class AuthServiceTest {
         TokenResponseDto response = authServiceImp.paycoOAuthLogin(code);
 
         assertNotNull(response);
+        verify(client, times(1)).login(anyString());
+    }
+
+    @Test
+    void testPaycoOAuthRecoverySuccess() {
+        String code = "valid_code";
+        PaycoOAuthResponseDto tokenResponseDto = new PaycoOAuthResponseDto();
+        tokenResponseDto.setAccessToken("access_token");
+        tokenResponseDto.setRefreshToken("refresh_token");
+
+        PaycoUserInfoResponseDto userInfoResponseDto = new PaycoUserInfoResponseDto();
+        PaycoUserInfoResponseDto.Member member = new PaycoUserInfoResponseDto.Member();
+        member.setIdNo("12345");
+        member.setEmail("email@example.com");
+        userInfoResponseDto.setData(new PaycoUserInfoResponseDto.Data());
+        userInfoResponseDto.getData().setMember(member);
+
+        RestTemplate restTemplate = mock(RestTemplate.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("client_id", "payco_client_id");
+        headers.set("access_token", "access_token");
+
+        when(restTemplate.getForEntity(anyString(), eq(PaycoOAuthResponseDto.class))).thenReturn(ResponseEntity.ok(tokenResponseDto));
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(PaycoUserInfoResponseDto.class))).thenReturn(ResponseEntity.ok(userInfoResponseDto));
+
+        authServiceImp = new AuthServiceImp(client, jwtUtils, restTemplate, rabbitTemplate, passwordEncoder, redisTemplate);
+        ReflectionTestUtils.setField(authServiceImp, "paycoClientId", "payco_client_id");
+        ReflectionTestUtils.setField(authServiceImp, "paycoTokenUri", "http://payco/token");
+        ReflectionTestUtils.setField(authServiceImp, "paycoUserInfoUri", "http://payco/userinfo");
+
+        Request request = Request.create(Request.HttpMethod.GET, "url", Map.of(), null, new RequestTemplate());
+        when(client.login(anyString())).thenThrow(new FeignException.Gone("", request, null, null));
+
+        String response = authServiceImp.paycoOAuthRecovery(code);
+
+        assertEquals("payco_12345", response);
         verify(client, times(1)).login(anyString());
     }
 
