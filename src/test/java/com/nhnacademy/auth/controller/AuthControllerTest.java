@@ -45,10 +45,11 @@ class AuthControllerTest {
 
     @Test
     void testReissue() throws Exception {
-        when(authService.reissue(anyString())).thenReturn(tokenResponseDto);
+        when(authService.reissue(anyString(), anyString())).thenReturn(tokenResponseDto);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/reissue")
-                        .header("refresh", "valid_refresh_token"))
+                        .header("refresh", "valid_refresh_token")
+                        .header("access", "valid_access_token"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.access").value("accessToken"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.refresh").value("refreshToken"))
@@ -80,10 +81,11 @@ class AuthControllerTest {
 
     @Test
     void testHandleTokenInvalidationException() throws Exception {
-        doThrow(new TokenInvalidationException("Invalid token")).when(authService).reissue(anyString());
+        doThrow(new TokenInvalidationException("Invalid token")).when(authService).reissue(anyString(), anyString());
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/reissue")
-                        .header("refresh", "invalid_refresh_token"))
+                        .header("refresh", "invalid_refresh_token")
+                        .header("access", "invalid_access_token"))
                 .andExpect(MockMvcResultMatchers.status().isUnauthorized())
                 .andDo(print());
     }

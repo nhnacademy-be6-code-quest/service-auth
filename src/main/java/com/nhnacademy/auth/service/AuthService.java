@@ -12,7 +12,7 @@ public interface AuthService {
      * @param refresh 재발급을 하기위한 토큰
      * @return 유효하다면 access, refresh 토큰을 유효하지 않다면 TokenInvalidation 예외를 반환합니다.
      */
-    TokenResponseDto reissue(String refresh);
+    TokenResponseDto reissue(String refresh, String access);
 
     /**
      * 로그인시 호출되는 api 함수로 email과 password를 인자로 받아 일치하는지 판단후 토큰을 발급합니다.
@@ -31,7 +31,7 @@ public interface AuthService {
      * @param refresh 로그아웃을 위한 토큰
      * @return 성공여부 반환
      */
-    String logout(String refresh);
+    String logout(String refresh, String access);
 
     /**
      * 휴면처리된 Oauth 계정을 복구할 때 호출되는 api 함수

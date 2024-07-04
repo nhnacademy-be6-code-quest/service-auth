@@ -21,9 +21,9 @@ public class AuthControllerImp implements AuthController {
 
     @Override
     @PostMapping("/api/reissue")
-    public ResponseEntity<TokenResponseDto> reissue(@RequestHeader("refresh") String refresh) {
+    public ResponseEntity<TokenResponseDto> reissue(@RequestHeader HttpHeaders headers) {
         log.info("reissue");
-        return new ResponseEntity<>(authService.reissue(refresh), HttpStatus.OK);
+        return new ResponseEntity<>(authService.reissue(headers.getFirst("refresh"), headers.getFirst("access")), HttpStatus.OK);
     }
 
     @Override
@@ -35,9 +35,9 @@ public class AuthControllerImp implements AuthController {
 
     @Override
     @PostMapping("/api/logout")
-    public ResponseEntity<String> logout(HttpHeaders headers) {
+    public ResponseEntity<String> logout(@RequestHeader  HttpHeaders headers) {
         log.info("logout");
-        return new ResponseEntity<>(authService.logout(headers.getFirst("refresh")), HttpStatus.OK);
+        return new ResponseEntity<>(authService.logout(headers.getFirst("refresh"), headers.getFirst("access")), HttpStatus.OK);
     }
 
     @Override

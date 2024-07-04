@@ -73,36 +73,39 @@ class AuthServiceTest {
 
     @Test
     void testReissueValidToken() {
+        String access = "valid_access_token";
         String refresh = "valid_refresh_token";
         String uuid = UUID.randomUUID().toString();
         String role = "ROLE_USER";
         Long userId = 1L;
 
         when(jwtUtils.isExpired(refresh)).thenReturn(false);
-        when(jwtUtils.getUUID(refresh)).thenReturn(uuid);
+        when(jwtUtils.getUUID(access)).thenReturn(uuid);
         when(hashOperations.get(refresh, uuid)).thenReturn(userId);
         when(jwtUtils.getRole(refresh)).thenReturn(List.of(role));
         when(jwtUtils.createRefreshToken(anyString(), eq(List.of(role)))).thenReturn("new_refresh_token");
         when(jwtUtils.createAccessToken(anyString(), eq(List.of(role)))).thenReturn("new_access_token");
 
-        TokenResponseDto tokenResponseDto = authServiceImp.reissue(refresh);
+        TokenResponseDto tokenResponseDto = authServiceImp.reissue(refresh, access);
 
         assertNotNull(tokenResponseDto);
         assertEquals("new_access_token", tokenResponseDto.getAccess());
         assertEquals("new_refresh_token", tokenResponseDto.getRefresh());
 
-        verify(redisTemplate, times(1)).delete(refresh);
-        verify(hashOperations, times(1)).put(anyString(), anyString(), eq(userId));
+        verify(redisTemplate, times(4)).delete(anyString());
+        verify(hashOperations, times(2)).put(anyString(), anyString(), eq(userId));
+        verify(redisTemplate, times(1)).expire(anyString(), eq(2L), eq(TimeUnit.HOURS));
         verify(redisTemplate, times(1)).expire(anyString(), eq(14L), eq(TimeUnit.DAYS));
     }
 
     @Test
     void testReissueExpiredToken() {
+        String access = "valid_access_token";
         String refresh = "expired_refresh_token";
 
         when(jwtUtils.isExpired(refresh)).thenReturn(true);
 
-        assertThrows(TokenInvalidationException.class, () -> authServiceImp.reissue(refresh));
+        assertThrows(TokenInvalidationException.class, () -> authServiceImp.reissue(refresh, access));
     }
 
     @Test
@@ -126,8 +129,9 @@ class AuthServiceTest {
         assertEquals("new_access_token", tokenResponseDto.getAccess());
         assertEquals("new_refresh_token", tokenResponseDto.getRefresh());
 
-        verify(redisTemplate, times(1)).delete(anyString());
-        verify(hashOperations, times(1)).put(anyString(), anyString(), eq(userId));
+        verify(redisTemplate, times(2)).delete(anyString());
+        verify(hashOperations, times(2)).put(anyString(), anyString(), eq(userId));
+        verify(redisTemplate, times(1)).expire(anyString(), eq(2L), eq(TimeUnit.HOURS));
         verify(redisTemplate, times(1)).expire(anyString(), eq(14L), eq(TimeUnit.DAYS));
     }
 
@@ -146,13 +150,14 @@ class AuthServiceTest {
 
     @Test
     void testLogout() {
+        String access = "valid_access_token";
         String refresh = "valid_refresh_token";
         String uuid = UUID.randomUUID().toString();
 
         when(jwtUtils.getUUID(refresh)).thenReturn(uuid);
         when(hashOperations.get(refresh, uuid)).thenReturn(1L);
 
-        String result = authServiceImp.logout(refresh);
+        String result = authServiceImp.logout(refresh, access);
 
         assertEquals("Success", result);
         verify(redisTemplate, times(1)).delete(refresh);
@@ -251,8 +256,9 @@ class AuthServiceTest {
         assertEquals("new_refresh_token", tokenResponseDto.getRefresh());
 
         verify(client, times(1)).createOauthClient(any(ClientOAuthRegisterRequestDto.class));
-        verify(redisTemplate, times(1)).delete(anyString());
-        verify(hashOperations, times(1)).put(anyString(), anyString(), eq(1L));
+        verify(redisTemplate, times(2)).delete(anyString());
+        verify(hashOperations, times(2)).put(anyString(), anyString(), eq(1L));
+        verify(redisTemplate, times(1)).expire(anyString(), eq(2L), eq(TimeUnit.HOURS));
         verify(redisTemplate, times(1)).expire(anyString(), eq(14L), eq(TimeUnit.DAYS));
     }
 }

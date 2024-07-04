@@ -27,7 +27,7 @@ public interface AuthController {
             }
     )
     @PostMapping("/api/reissue")
-    ResponseEntity<TokenResponseDto> reissue(@RequestHeader("refresh") String refresh);
+    ResponseEntity<TokenResponseDto> reissue(@RequestHeader HttpHeaders headers);
 
     @Operation(
             summary = "로그인",
