@@ -135,7 +135,7 @@ public class AuthServiceImp implements AuthService {
         } catch (FeignException.Unauthorized e) {
             response = new TokenResponseDto(
                     null,
-                    jwtUtils.createAccessToken(identifier, List.of("ROLE_OAUTH"))
+                    jwtUtils.createRefreshToken(identifier, List.of("ROLE_OAUTH"))
             );
         } catch (FeignException.Gone e) {
             response = null;
