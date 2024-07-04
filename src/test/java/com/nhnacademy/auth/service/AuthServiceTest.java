@@ -92,8 +92,9 @@ class AuthServiceTest {
         assertEquals("new_access_token", tokenResponseDto.getAccess());
         assertEquals("new_refresh_token", tokenResponseDto.getRefresh());
 
-        verify(redisTemplate, times(1)).delete(refresh);
-        verify(hashOperations, times(1)).put(anyString(), anyString(), eq(userId));
+        verify(redisTemplate, times(4)).delete(anyString());
+        verify(hashOperations, times(2)).put(anyString(), anyString(), eq(userId));
+        verify(redisTemplate, times(1)).expire(anyString(), eq(2L), eq(TimeUnit.HOURS));
         verify(redisTemplate, times(1)).expire(anyString(), eq(14L), eq(TimeUnit.DAYS));
     }
 
@@ -128,8 +129,9 @@ class AuthServiceTest {
         assertEquals("new_access_token", tokenResponseDto.getAccess());
         assertEquals("new_refresh_token", tokenResponseDto.getRefresh());
 
-        verify(redisTemplate, times(1)).delete(anyString());
-        verify(hashOperations, times(1)).put(anyString(), anyString(), eq(userId));
+        verify(redisTemplate, times(2)).delete(anyString());
+        verify(hashOperations, times(2)).put(anyString(), anyString(), eq(userId));
+        verify(redisTemplate, times(1)).expire(anyString(), eq(2L), eq(TimeUnit.HOURS));
         verify(redisTemplate, times(1)).expire(anyString(), eq(14L), eq(TimeUnit.DAYS));
     }
 
@@ -148,13 +150,14 @@ class AuthServiceTest {
 
     @Test
     void testLogout() {
+        String access = "valid_access_token";
         String refresh = "valid_refresh_token";
         String uuid = UUID.randomUUID().toString();
 
         when(jwtUtils.getUUID(refresh)).thenReturn(uuid);
         when(hashOperations.get(refresh, uuid)).thenReturn(1L);
 
-        String result = authServiceImp.logout(refresh);
+        String result = authServiceImp.logout(refresh, access);
 
         assertEquals("Success", result);
         verify(redisTemplate, times(1)).delete(refresh);
@@ -253,8 +256,9 @@ class AuthServiceTest {
         assertEquals("new_refresh_token", tokenResponseDto.getRefresh());
 
         verify(client, times(1)).createOauthClient(any(ClientOAuthRegisterRequestDto.class));
-        verify(redisTemplate, times(1)).delete(anyString());
-        verify(hashOperations, times(1)).put(anyString(), anyString(), eq(1L));
+        verify(redisTemplate, times(2)).delete(anyString());
+        verify(hashOperations, times(2)).put(anyString(), anyString(), eq(1L));
+        verify(redisTemplate, times(1)).expire(anyString(), eq(2L), eq(TimeUnit.HOURS));
         verify(redisTemplate, times(1)).expire(anyString(), eq(14L), eq(TimeUnit.DAYS));
     }
 }

@@ -37,7 +37,7 @@ public class AuthControllerImp implements AuthController {
     @PostMapping("/api/logout")
     public ResponseEntity<String> logout(@RequestHeader  HttpHeaders headers) {
         log.info("logout");
-        return new ResponseEntity<>(authService.logout(headers.getFirst("refresh")), HttpStatus.OK);
+        return new ResponseEntity<>(authService.logout(headers.getFirst("refresh"), headers.getFirst("access")), HttpStatus.OK);
     }
 
     @Override

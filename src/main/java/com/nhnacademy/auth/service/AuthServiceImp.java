@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -73,9 +72,12 @@ public class AuthServiceImp implements AuthService {
         String uuid = UUID.randomUUID().toString();
         List<String> roles = jwtUtils.getRole(refresh);
         String newRefresh = jwtUtils.createRefreshToken(uuid, roles);
+        String newAccess = jwtUtils.createAccessToken(uuid, roles);
+
+        redisTemplate.delete(access);
         redisTemplate.delete(refresh);
-        addRefreshToken(id, uuid, newRefresh);
-        return new TokenResponseDto(jwtUtils.createAccessToken(uuid, roles), newRefresh);
+        addToken(id, uuid, newRefresh, newAccess);
+        return new TokenResponseDto(newAccess, newRefresh);
     }
 
     @Override
@@ -92,16 +94,16 @@ public class AuthServiceImp implements AuthService {
         Long userId = response.getClientId();
         List<String> roles = response.getRole();
         String uuid = UUID.randomUUID().toString();
+        String access = jwtUtils.createAccessToken(uuid, roles);
         String refresh = jwtUtils.createRefreshToken(uuid, roles);
-        addRefreshToken(userId, uuid, refresh);
-        return new TokenResponseDto(jwtUtils.createAccessToken(uuid, roles), refresh);
+        addToken(userId, uuid, refresh, access);
+        return new TokenResponseDto(access, refresh);
     }
 
     @Override
-    public String logout(String refresh) {
-        if (redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh)) != null) {
-            redisTemplate.delete(refresh);
-        }
+    public String logout(String refresh, String access) {
+        redisTemplate.delete(access);
+        redisTemplate.delete(refresh);
         return "Success";
     }
 
@@ -129,7 +131,7 @@ public class AuthServiceImp implements AuthService {
                     jwtUtils.createAccessToken(identifier, loginInfo.getRole()),
                     jwtUtils.createRefreshToken(identifier, loginInfo.getRole())
             );
-            addRefreshToken(loginInfo.getClientId(), identifier, response.getRefresh());
+            addToken(loginInfo.getClientId(), identifier, response.getRefresh(), response.getAccess());
         } catch (FeignException.Unauthorized e) {
             response = new TokenResponseDto(
                     jwtUtils.createAccessToken(identifier, List.of("ROLE_OAUTH")),
@@ -177,7 +179,7 @@ public class AuthServiceImp implements AuthService {
         ClientLoginResponseDto response = client.login(uuid).getBody();
         String accessToken = jwtUtils.createAccessToken(uuid, response.getRole());
         String refreshToken = jwtUtils.createRefreshToken(uuid, response.getRole());
-        addRefreshToken(response.getClientId(), uuid, refreshToken);
+        addToken(response.getClientId(), uuid, refreshToken, accessToken);
         return new TokenResponseDto(accessToken, refreshToken);
     }
 
@@ -189,10 +191,14 @@ public class AuthServiceImp implements AuthService {
                 "&client_secret=" + paycoClientSecret;
     }
 
-    private void addRefreshToken(Long userId, String uuid, String refresh) {
+    private void addToken(Long userId, String uuid, String refresh, String access) {
         redisTemplate.delete(refresh);
         redisTemplate.opsForHash().put(refresh, uuid, userId);
         redisTemplate.expire(refresh, 14, TimeUnit.DAYS);
+
+        redisTemplate.delete(access);
+        redisTemplate.opsForHash().put(access, uuid, userId);
+        redisTemplate.expire(access, 2, TimeUnit.HOURS);
 
         log.info("send login Message");
         rabbitTemplate.convertAndSend(loginExchangeName, loginRoutingKey, new ClientLoginMessageDto(userId, LocalDateTime.now()));

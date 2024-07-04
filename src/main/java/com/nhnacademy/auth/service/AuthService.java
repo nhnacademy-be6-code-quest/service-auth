@@ -31,7 +31,7 @@ public interface AuthService {
      * @param refresh 로그아웃을 위한 토큰
      * @return 성공여부 반환
      */
-    String logout(String refresh);
+    String logout(String refresh, String access);
 
     /**
      * 휴면처리된 Oauth 계정을 복구할 때 호출되는 api 함수
