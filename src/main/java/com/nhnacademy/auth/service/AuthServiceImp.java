@@ -134,8 +134,8 @@ public class AuthServiceImp implements AuthService {
             addToken(loginInfo.getClientId(), identifier, response.getRefresh(), response.getAccess());
         } catch (FeignException.Unauthorized e) {
             response = new TokenResponseDto(
-                    jwtUtils.createAccessToken(identifier, List.of("ROLE_OAUTH")),
-                    null
+                    null,
+                    jwtUtils.createAccessToken(identifier, List.of("ROLE_OAUTH"))
             );
         } catch (FeignException.Gone e) {
             response = null;
