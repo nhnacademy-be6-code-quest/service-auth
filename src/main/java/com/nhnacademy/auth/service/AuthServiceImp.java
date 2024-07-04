@@ -57,17 +57,17 @@ public class AuthServiceImp implements AuthService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
-    public TokenResponseDto reissue(String refresh) {
+    public TokenResponseDto reissue(String refresh, String access) {
         Long id = null;
-        if (refresh == null) {
-            throw new TokenInvalidationException("refresh is null");
+        if (refresh == null || access == null) {
+            throw new TokenInvalidationException("token is null");
         } else if (jwtUtils.isExpired(refresh)) {
             throw new TokenInvalidationException("refresh expired token");
         }
         try {
-            id = Long.valueOf(String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh))));
+            id = Long.valueOf(String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(access))));
         } catch (NumberFormatException e) {
-            throw new TokenInvalidationException("refresh expired token");
+            throw new TokenInvalidationException("invalid token");
         }
 
         String uuid = UUID.randomUUID().toString();

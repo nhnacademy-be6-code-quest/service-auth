@@ -73,19 +73,20 @@ class AuthServiceTest {
 
     @Test
     void testReissueValidToken() {
+        String access = "valid_access_token";
         String refresh = "valid_refresh_token";
         String uuid = UUID.randomUUID().toString();
         String role = "ROLE_USER";
         Long userId = 1L;
 
         when(jwtUtils.isExpired(refresh)).thenReturn(false);
-        when(jwtUtils.getUUID(refresh)).thenReturn(uuid);
+        when(jwtUtils.getUUID(access)).thenReturn(uuid);
         when(hashOperations.get(refresh, uuid)).thenReturn(userId);
         when(jwtUtils.getRole(refresh)).thenReturn(List.of(role));
         when(jwtUtils.createRefreshToken(anyString(), eq(List.of(role)))).thenReturn("new_refresh_token");
         when(jwtUtils.createAccessToken(anyString(), eq(List.of(role)))).thenReturn("new_access_token");
 
-        TokenResponseDto tokenResponseDto = authServiceImp.reissue(refresh);
+        TokenResponseDto tokenResponseDto = authServiceImp.reissue(refresh, access);
 
         assertNotNull(tokenResponseDto);
         assertEquals("new_access_token", tokenResponseDto.getAccess());
@@ -98,11 +99,12 @@ class AuthServiceTest {
 
     @Test
     void testReissueExpiredToken() {
+        String access = "valid_access_token";
         String refresh = "expired_refresh_token";
 
         when(jwtUtils.isExpired(refresh)).thenReturn(true);
 
-        assertThrows(TokenInvalidationException.class, () -> authServiceImp.reissue(refresh));
+        assertThrows(TokenInvalidationException.class, () -> authServiceImp.reissue(refresh, access));
     }
 
     @Test
