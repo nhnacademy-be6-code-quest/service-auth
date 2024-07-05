@@ -7,6 +7,7 @@ import com.nhnacademy.auth.dto.response.ClientLoginResponseDto;
 import com.nhnacademy.auth.dto.response.PaycoOAuthResponseDto;
 import com.nhnacademy.auth.dto.response.PaycoUserInfoResponseDto;
 import com.nhnacademy.auth.dto.response.TokenResponseDto;
+import com.nhnacademy.auth.exception.DeletedClientException;
 import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
 import com.nhnacademy.auth.utils.JWTUtils;
@@ -85,8 +86,10 @@ public class AuthServiceImp implements AuthService {
         ClientLoginResponseDto response;
         try {
             response = client.login(clientEmail).getBody();
-        } catch (FeignException e) {
+        } catch (FeignException.Unauthorized e) {
             throw new LoginFailException("client login fail");
+        } catch (FeignException.Gone e) {
+            throw new DeletedClientException("deleted client fail");
         }
         if (!passwordEncoder.matches(clientPassword, response.getClientPassword())) {
             throw new LoginFailException("client login fail");
