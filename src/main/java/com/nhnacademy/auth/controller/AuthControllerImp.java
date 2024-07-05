@@ -3,6 +3,7 @@ package com.nhnacademy.auth.controller;
 import com.nhnacademy.auth.dto.request.ClientLoginRequestDto;
 import com.nhnacademy.auth.dto.request.OAuthRegisterRequestDto;
 import com.nhnacademy.auth.dto.response.TokenResponseDto;
+import com.nhnacademy.auth.exception.DeletedClientException;
 import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
 import com.nhnacademy.auth.service.AuthService;
@@ -76,5 +77,11 @@ public class AuthControllerImp implements AuthController {
     public ResponseEntity<String> handleLoginFailException(LoginFailException e) {
         log.error(e.getMessage());
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(DeletedClientException.class)
+    public ResponseEntity<String> handleDeletedClientException(DeletedClientException e) {
+        log.error(e.getMessage());
+        return new ResponseEntity<>(HttpStatus.GONE);
     }
 }
