@@ -58,17 +58,7 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     public TokenResponseDto reissue(String refresh, String access) {
-        Long id = null;
-        if (refresh == null || access == null) {
-            throw new TokenInvalidationException("token is null");
-        } else if (jwtUtils.isExpired(refresh)) {
-            throw new TokenInvalidationException("refresh expired token");
-        }
-        try {
-            id = Long.valueOf(String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(access))));
-        } catch (NumberFormatException e) {
-            throw new TokenInvalidationException("invalid token");
-        }
+        validateTokens(refresh, access);
 
         String uuid = UUID.randomUUID().toString();
         List<String> roles = jwtUtils.getRole(refresh);
@@ -77,30 +67,54 @@ public class AuthServiceImp implements AuthService {
 
         redisTemplate.delete(access);
         redisTemplate.delete(refresh);
-        addToken(id, uuid, newRefresh, newAccess);
+        addToken(getIdFromToken(refresh, access), uuid, newRefresh, newAccess);
         return new TokenResponseDto(newAccess, newRefresh);
+    }
+
+    private void validateTokens(String refresh, String access) {
+        if (refresh == null || access == null) {
+            throw new TokenInvalidationException("token is null");
+        } else if (jwtUtils.isExpired(refresh)) {
+            throw new TokenInvalidationException("refresh expired token");
+        }
+    }
+
+    private Long getIdFromToken(String refresh, String access) {
+        try {
+            return Long.valueOf(String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(access))));
+        } catch (NumberFormatException e) {
+            throw new TokenInvalidationException("invalid token");
+        }
     }
 
     @Override
     public TokenResponseDto login(String clientEmail, String clientPassword) {
-        ClientLoginResponseDto response;
+        ClientLoginResponseDto response = getClientLoginResponse(clientEmail);
+
+        validateClientPassword(clientPassword, response);
+
+        List<String> roles = response.getRole();
+        String uuid = UUID.randomUUID().toString();
+        String access = jwtUtils.createAccessToken(uuid, roles);
+        String refresh = jwtUtils.createRefreshToken(uuid, roles);
+        addToken(response.getClientId(), uuid, refresh, access);
+        return new TokenResponseDto(access, refresh);
+    }
+
+    private ClientLoginResponseDto getClientLoginResponse(String clientEmail) {
         try {
-            response = client.login(clientEmail).getBody();
+            return client.login(clientEmail).getBody();
         } catch (FeignException.Unauthorized e) {
             throw new LoginFailException("client login fail");
         } catch (FeignException.Gone e) {
             throw new DeletedClientException("deleted client fail");
         }
-        if (!passwordEncoder.matches(clientPassword, response.getClientPassword())) {
+    }
+
+    private void validateClientPassword(String clientPassword, ClientLoginResponseDto response) {
+        if (response == null || !passwordEncoder.matches(clientPassword, response.getClientPassword())) {
             throw new LoginFailException("client login fail");
         }
-        Long userId = response.getClientId();
-        List<String> roles = response.getRole();
-        String uuid = UUID.randomUUID().toString();
-        String access = jwtUtils.createAccessToken(uuid, roles);
-        String refresh = jwtUtils.createRefreshToken(uuid, roles);
-        addToken(userId, uuid, refresh, access);
-        return new TokenResponseDto(access, refresh);
     }
 
     @Override
@@ -112,55 +126,26 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     public TokenResponseDto paycoOAuthLogin(String code) {
-        TokenResponseDto response;
-
-        ResponseEntity<PaycoOAuthResponseDto> tokenResponse = restTemplate.getForEntity(getPaycoTokenUri(code), PaycoOAuthResponseDto.class);
-        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
-            return null;
-        }
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("client_id", paycoClientId);
-        headers.set("access_token", tokenResponse.getBody().getAccessToken());
-        ResponseEntity<PaycoUserInfoResponseDto> userInfoResponse = restTemplate.postForEntity(paycoUserInfoUri, new HttpEntity<>(null, headers), PaycoUserInfoResponseDto.class);
-        if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
-            return null;
-        }
-        String identifier = PAYCO_PREFIX + userInfoResponse.getBody().getData().getMember().getIdNo();
+        String identifier = PAYCO_PREFIX + getPaycoUserInfo(code);
 
         try {
             ClientLoginResponseDto loginInfo = client.login(identifier).getBody();
-            response = new TokenResponseDto(
+            TokenResponseDto response = new TokenResponseDto(
                     jwtUtils.createAccessToken(identifier, loginInfo.getRole()),
                     jwtUtils.createRefreshToken(identifier, loginInfo.getRole())
             );
             addToken(loginInfo.getClientId(), identifier, response.getRefresh(), response.getAccess());
-        } catch (FeignException.Unauthorized e) {
-            response = new TokenResponseDto(
-                    null,
-                    jwtUtils.createRefreshToken(identifier, List.of("ROLE_OAUTH"))
-            );
+            return response;
+        } catch (FeignException.NotFound e) {
+            return new TokenResponseDto(null, jwtUtils.createRefreshToken(identifier, List.of("ROLE_OAUTH")));
         } catch (FeignException.Gone e) {
-            response = null;
+            return null;
         }
-        return response;
     }
 
     @Override
     public String paycoOAuthRecovery(String code) {
-        ResponseEntity<PaycoOAuthResponseDto> tokenResponse = restTemplate.getForEntity(getPaycoTokenUri(code), PaycoOAuthResponseDto.class);
-        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
-            return null;
-        }
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("client_id", paycoClientId);
-        headers.set("access_token", tokenResponse.getBody().getAccessToken());
-        ResponseEntity<PaycoUserInfoResponseDto> userInfoResponse = restTemplate.postForEntity(paycoUserInfoUri, new HttpEntity<>(null, headers), PaycoUserInfoResponseDto.class);
-        if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
-            return null;
-        }
-        String identifier = PAYCO_PREFIX + userInfoResponse.getBody().getData().getMember().getIdNo();
+        String identifier = PAYCO_PREFIX + getPaycoUserInfo(code);
 
         try {
             client.login(identifier);
@@ -192,6 +177,26 @@ public class AuthServiceImp implements AuthService {
                 "&code=" + code +
                 "&client_id=" + paycoClientId +
                 "&client_secret=" + paycoClientSecret;
+    }
+
+    private String getPaycoToken(String code) {
+        ResponseEntity<PaycoOAuthResponseDto> response = restTemplate.getForEntity(getPaycoTokenUri(code), PaycoOAuthResponseDto.class);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new LoginFailException("payco login fail");
+        }
+        return response.getBody().getAccessToken();
+    }
+
+    private String getPaycoUserInfo(String code) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("client_id", paycoClientId);
+        headers.set("access_token", getPaycoToken(code));
+
+        ResponseEntity<PaycoUserInfoResponseDto> response = restTemplate.postForEntity(paycoUserInfoUri, new HttpEntity<>(null, headers), PaycoUserInfoResponseDto.class);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new LoginFailException("payco login fail");
+        }
+        return response.getBody().getData().getMember().getIdNo();
     }
 
     private void addToken(Long userId, String uuid, String refresh, String access) {
