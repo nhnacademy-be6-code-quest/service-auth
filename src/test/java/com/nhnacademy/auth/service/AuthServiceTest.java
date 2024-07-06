@@ -80,7 +80,7 @@ class AuthServiceTest {
         Long userId = 1L;
 
         when(jwtUtils.isExpired(refresh)).thenReturn(false);
-        when(jwtUtils.getUUID(access)).thenReturn(uuid);
+        when(jwtUtils.getUUID(refresh)).thenReturn(uuid);
         when(hashOperations.get(refresh, uuid)).thenReturn(userId);
         when(jwtUtils.getRole(refresh)).thenReturn(List.of(role));
         when(jwtUtils.createRefreshToken(anyString(), eq(List.of(role)))).thenReturn("new_refresh_token");
