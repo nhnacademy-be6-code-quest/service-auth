@@ -12,6 +12,8 @@ import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
 import com.nhnacademy.auth.utils.JWTUtils;
 import feign.FeignException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -65,9 +67,9 @@ public class AuthServiceImp implements AuthService {
         String newRefresh = jwtUtils.createRefreshToken(uuid, roles);
         String newAccess = jwtUtils.createAccessToken(uuid, roles);
 
+        addToken(getIdFromToken(refresh), uuid, newRefresh, newAccess);
         redisTemplate.delete(access);
         redisTemplate.delete(refresh);
-        addToken(getIdFromToken(refresh, access), uuid, newRefresh, newAccess);
         return new TokenResponseDto(newAccess, newRefresh);
     }
 
@@ -77,11 +79,19 @@ public class AuthServiceImp implements AuthService {
         } else if (jwtUtils.isExpired(refresh)) {
             throw new TokenInvalidationException("refresh expired token");
         }
+
+        try {
+            jwtUtils.getUUID(access);
+        } catch (ExpiredJwtException e) {
+            log.info("access token expired");
+        } catch (JwtException e) {
+            throw new TokenInvalidationException("invalid access token");
+        }
     }
 
-    private Long getIdFromToken(String refresh, String access) {
+    private Long getIdFromToken(String refresh) {
         try {
-            return Long.valueOf(String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(access))));
+            return Long.valueOf(String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh))));
         } catch (NumberFormatException e) {
             throw new TokenInvalidationException("invalid token");
         }
