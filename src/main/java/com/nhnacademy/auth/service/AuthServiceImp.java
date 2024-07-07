@@ -114,7 +114,7 @@ public class AuthServiceImp implements AuthService {
     private ClientLoginResponseDto getClientLoginResponse(String clientEmail) {
         try {
             return client.login(clientEmail).getBody();
-        } catch (FeignException.Unauthorized e) {
+        } catch (FeignException.Unauthorized | FeignException.NotFound e) {
             throw new LoginFailException("client login fail");
         } catch (FeignException.Gone e) {
             throw new DeletedClientException("deleted client fail");
