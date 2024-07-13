@@ -21,43 +21,37 @@ public class AuthControllerImp implements AuthController {
     private final AuthService authService;
 
     @Override
-    @PostMapping("/api/reissue")
-    public ResponseEntity<TokenResponseDto> reissue(@RequestHeader HttpHeaders headers) {
+    public ResponseEntity<TokenResponseDto> reissue(HttpHeaders headers) {
         log.info("reissue");
         return new ResponseEntity<>(authService.reissue(headers.getFirst("refresh"), headers.getFirst("access")), HttpStatus.OK);
     }
 
     @Override
-    @PostMapping("/api/login")
     public ResponseEntity<TokenResponseDto> login(ClientLoginRequestDto clientLoginRequestDto) {
         log.info("login");
         return new ResponseEntity<>(authService.login(clientLoginRequestDto.getClientEmail(), clientLoginRequestDto.getClientPassword()), HttpStatus.OK);
     }
 
     @Override
-    @PostMapping("/api/logout")
-    public ResponseEntity<String> logout(@RequestHeader  HttpHeaders headers) {
+    public ResponseEntity<String> logout(HttpHeaders headers) {
         log.info("logout");
         return new ResponseEntity<>(authService.logout(headers.getFirst("refresh"), headers.getFirst("access")), HttpStatus.OK);
     }
 
     @Override
-    @GetMapping("/api/payco/login/callback")
-    public ResponseEntity<TokenResponseDto> paycoLoginCallback(@RequestParam("code") String code) {
+    public ResponseEntity<TokenResponseDto> paycoLoginCallback(String code) {
         log.info("payco login callback");
         return ResponseEntity.ok(authService.paycoOAuthLogin(code));
     }
 
     @Override
-    @GetMapping("/api/payco/recovery/callback")
-    public ResponseEntity<String> paycoRecoveryCallback(@RequestParam("code") String code) {
+    public ResponseEntity<String> paycoRecoveryCallback(String code) {
         log.info("payco recovery callback");
         return ResponseEntity.ok(authService.paycoOAuthRecovery(code));
     }
 
     @Override
-    @PostMapping("/api/oauth")
-    public ResponseEntity<TokenResponseDto> oAuthRegister(@RequestBody OAuthRegisterRequestDto oAuthRegisterRequestDto) {
+    public ResponseEntity<TokenResponseDto> oAuthRegister(OAuthRegisterRequestDto oAuthRegisterRequestDto) {
         log.info("oAuthRegister");
         return ResponseEntity.ok(authService.oAuthRegister(
                         oAuthRegisterRequestDto.getAccess(),
@@ -67,19 +61,19 @@ public class AuthControllerImp implements AuthController {
         );
     }
 
-    @ExceptionHandler(TokenInvalidationException.class)
+    @Override
     public ResponseEntity<String> handleTokenInvalidationException(TokenInvalidationException e) {
         log.error(e.getMessage());
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(LoginFailException.class)
+    @Override
     public ResponseEntity<String> handleLoginFailException(LoginFailException e) {
         log.error(e.getMessage());
         return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(DeletedClientException.class)
+    @Override
     public ResponseEntity<String> handleDeletedClientException(DeletedClientException e) {
         log.error(e.getMessage());
         return new ResponseEntity<>(HttpStatus.GONE);

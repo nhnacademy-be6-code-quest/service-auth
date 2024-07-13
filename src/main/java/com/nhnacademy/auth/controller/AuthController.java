@@ -3,6 +3,9 @@ package com.nhnacademy.auth.controller;
 import com.nhnacademy.auth.dto.request.ClientLoginRequestDto;
 import com.nhnacademy.auth.dto.request.OAuthRegisterRequestDto;
 import com.nhnacademy.auth.dto.response.TokenResponseDto;
+import com.nhnacademy.auth.exception.DeletedClientException;
+import com.nhnacademy.auth.exception.LoginFailException;
+import com.nhnacademy.auth.exception.TokenInvalidationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -96,5 +99,14 @@ public interface AuthController {
             }
     )
     @PostMapping("/api/oauth")
-    ResponseEntity<TokenResponseDto> oAuthRegister(OAuthRegisterRequestDto oAuthRegisterRequestDto);
+    ResponseEntity<TokenResponseDto> oAuthRegister(@RequestBody OAuthRegisterRequestDto oAuthRegisterRequestDto);
+
+    @ExceptionHandler(TokenInvalidationException.class)
+    ResponseEntity<String> handleTokenInvalidationException(TokenInvalidationException e);
+
+    @ExceptionHandler(LoginFailException.class)
+    ResponseEntity<String> handleLoginFailException(LoginFailException e);
+
+    @ExceptionHandler(DeletedClientException.class)
+    ResponseEntity<String> handleDeletedClientException(DeletedClientException e);
 }
