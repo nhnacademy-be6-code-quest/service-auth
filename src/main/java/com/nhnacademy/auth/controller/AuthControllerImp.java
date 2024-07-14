@@ -53,12 +53,7 @@ public class AuthControllerImp implements AuthController {
     @Override
     public ResponseEntity<TokenResponseDto> oAuthRegister(OAuthRegisterRequestDto oAuthRegisterRequestDto) {
         log.info("oAuthRegister");
-        return ResponseEntity.ok(authService.oAuthRegister(
-                        oAuthRegisterRequestDto.getAccess(),
-                        oAuthRegisterRequestDto.getName(),
-                        oAuthRegisterRequestDto.getBirth()
-                )
-        );
+        return ResponseEntity.ok(authService.oAuthRegister(oAuthRegisterRequestDto.getAccess(), oAuthRegisterRequestDto.getName(), oAuthRegisterRequestDto.getBirth()));
     }
 
     @Override
