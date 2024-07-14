@@ -19,6 +19,8 @@ public class RabbitConfig {
     private String loginQueueName;
     @Value("${rabbit.login.routing.key}")
     private String loginRoutingKey;
+    @Value("${rabbit.login.dlq.routing.key}")
+    private String loginDlqRoutingKey;
 
     @Bean
     DirectExchange loginExchange() {
@@ -27,7 +29,10 @@ public class RabbitConfig {
 
     @Bean
     Queue loginQueue() {
-        return new Queue(loginQueueName);
+        return QueueBuilder.durable(loginQueueName)
+                .withArgument("x-dead-letter-exchange", loginExchangeName)
+                .withArgument("x-dead-letter-routing-key", loginDlqRoutingKey)
+                .build();
     }
 
     @Bean
