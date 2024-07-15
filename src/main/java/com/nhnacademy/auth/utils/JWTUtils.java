@@ -1,6 +1,7 @@
 package com.nhnacademy.auth.utils;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +50,7 @@ public class JWTUtils {
         }
     }
 
-    private Claims getClaimsFromToken(String token) {
+    private Claims getClaimsFromToken(String token) throws JwtException {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
     }
 
