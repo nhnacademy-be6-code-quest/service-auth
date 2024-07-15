@@ -58,10 +58,10 @@ public interface AuthService {
      * 처음 로그인한 PaycoOAuth 유저를 등록할 때 호출되는 api 함수
      *
      * @author gihwanJang
-     * @param access accessToken
+     * @param refresh refreshToken
      * @param name 유저 이름
      * @param birth 유저 생일
      * @return 토큰 정보를 반환
      */
-    TokenResponseDto oAuthRegister(String access, String name, LocalDate birth);
+    TokenResponseDto oAuthRegister(String refresh, String name, LocalDate birth);
 }

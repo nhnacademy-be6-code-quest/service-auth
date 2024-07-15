@@ -11,6 +11,7 @@ import com.nhnacademy.auth.exception.DeletedClientException;
 import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
 import com.nhnacademy.auth.utils.JWTUtils;
+import com.nhnacademy.auth.utils.TransformerUtils;
 import feign.FeignException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -56,6 +57,7 @@ public class AuthServiceImp implements AuthService {
     private final RestTemplate restTemplate;
     private final RabbitTemplate rabbitTemplate;
     private final PasswordEncoder passwordEncoder;
+    private final TransformerUtils transformerUtils;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
@@ -63,12 +65,12 @@ public class AuthServiceImp implements AuthService {
         validateTokens(refresh, access);
 
         String uuid = UUID.randomUUID().toString();
+        String userId = String.valueOf(redisTemplate.opsForHash().get(refresh, jwtUtils.getUUID(refresh)));
         List<String> roles = jwtUtils.getRole(refresh);
         String newRefresh = jwtUtils.createRefreshToken(uuid, roles);
-        String newAccess = jwtUtils.createAccessToken(uuid, roles);
+        String newAccess = jwtUtils.createAccessToken(transformerUtils.encode(userId), roles);
 
-        addToken(getIdFromToken(refresh), uuid, newRefresh, newAccess);
-        redisTemplate.delete(access);
+        addToken(getIdFromToken(refresh), uuid, newRefresh);
         redisTemplate.delete(refresh);
         return new TokenResponseDto(newAccess, newRefresh);
     }
@@ -83,7 +85,7 @@ public class AuthServiceImp implements AuthService {
         try {
             jwtUtils.getUUID(access);
         } catch (ExpiredJwtException e) {
-            log.info("access token expired");
+            log.info("access expired token");
         } catch (JwtException e) {
             throw new TokenInvalidationException("invalid access token");
         }
@@ -105,9 +107,9 @@ public class AuthServiceImp implements AuthService {
 
         List<String> roles = response.getRole();
         String uuid = UUID.randomUUID().toString();
-        String access = jwtUtils.createAccessToken(uuid, roles);
+        String access = jwtUtils.createAccessToken(transformerUtils.encode(response.getClientId().toString()), roles);
         String refresh = jwtUtils.createRefreshToken(uuid, roles);
-        addToken(response.getClientId(), uuid, refresh, access);
+        addToken(response.getClientId(), uuid, refresh);
         return new TokenResponseDto(access, refresh);
     }
 
@@ -129,7 +131,6 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     public String logout(String refresh, String access) {
-        redisTemplate.delete(access);
         redisTemplate.delete(refresh);
         return "Success";
     }
@@ -141,10 +142,10 @@ public class AuthServiceImp implements AuthService {
         try {
             ClientLoginResponseDto loginInfo = client.login(identifier).getBody();
             TokenResponseDto response = new TokenResponseDto(
-                    jwtUtils.createAccessToken(identifier, loginInfo.getRole()),
+                    jwtUtils.createAccessToken(transformerUtils.encode(loginInfo.getClientId().toString()), loginInfo.getRole()),
                     jwtUtils.createRefreshToken(identifier, loginInfo.getRole())
             );
-            addToken(loginInfo.getClientId(), identifier, response.getRefresh(), response.getAccess());
+            addToken(loginInfo.getClientId(), identifier, response.getRefresh());
             return response;
         } catch (FeignException.NotFound e) {
             return new TokenResponseDto(null, jwtUtils.createRefreshToken(identifier, List.of("ROLE_OAUTH")));
@@ -166,8 +167,8 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
-    public TokenResponseDto oAuthRegister(String access, String name, LocalDate birth) {
-        String uuid = jwtUtils.getUUID(access);
+    public TokenResponseDto oAuthRegister(String refresh, String name, LocalDate birth) {
+        String uuid = jwtUtils.getUUID(refresh);
         client.createOauthClient(ClientOAuthRegisterRequestDto.builder()
                 .identify(uuid)
                 .name(name)
@@ -175,9 +176,9 @@ public class AuthServiceImp implements AuthService {
                 .build());
 
         ClientLoginResponseDto response = client.login(uuid).getBody();
-        String accessToken = jwtUtils.createAccessToken(uuid, response.getRole());
+        String accessToken = jwtUtils.createAccessToken(transformerUtils.encode(response.getClientId().toString()), response.getRole());
         String refreshToken = jwtUtils.createRefreshToken(uuid, response.getRole());
-        addToken(response.getClientId(), uuid, refreshToken, accessToken);
+        addToken(response.getClientId(), uuid, refreshToken);
         return new TokenResponseDto(accessToken, refreshToken);
     }
 
@@ -209,14 +210,10 @@ public class AuthServiceImp implements AuthService {
         return response.getBody().getData().getMember().getIdNo();
     }
 
-    private void addToken(Long userId, String uuid, String refresh, String access) {
+    private void addToken(Long userId, String uuid, String refresh) {
         redisTemplate.delete(refresh);
         redisTemplate.opsForHash().put(refresh, uuid, userId);
         redisTemplate.expire(refresh, 14, TimeUnit.DAYS);
-
-        redisTemplate.delete(access);
-        redisTemplate.opsForHash().put(access, uuid, userId);
-        redisTemplate.expire(access, 2, TimeUnit.HOURS);
 
         log.info("send login Message");
         rabbitTemplate.convertAndSend(loginExchangeName, loginRoutingKey, new ClientLoginMessageDto(userId, LocalDateTime.now()));

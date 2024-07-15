@@ -6,6 +6,7 @@ import com.nhnacademy.auth.dto.response.*;
 import com.nhnacademy.auth.exception.LoginFailException;
 import com.nhnacademy.auth.exception.TokenInvalidationException;
 import com.nhnacademy.auth.utils.JWTUtils;
+import com.nhnacademy.auth.utils.TransformerUtils;
 import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
@@ -56,6 +57,9 @@ class AuthServiceTest {
     private HashOperations<String, Object, Object> hashOperations;
 
     @Mock
+    private TransformerUtils transformerUtils;
+
+    @Mock
     private RestTemplate restTemplate;
 
     @InjectMocks
@@ -85,6 +89,7 @@ class AuthServiceTest {
         when(jwtUtils.getRole(refresh)).thenReturn(List.of(role));
         when(jwtUtils.createRefreshToken(anyString(), eq(List.of(role)))).thenReturn("new_refresh_token");
         when(jwtUtils.createAccessToken(anyString(), eq(List.of(role)))).thenReturn("new_access_token");
+        when(jwtUtils.getUUID(access)).thenReturn("new_access_token");
 
         TokenResponseDto tokenResponseDto = authServiceImp.reissue(refresh, access);
 
@@ -92,9 +97,8 @@ class AuthServiceTest {
         assertEquals("new_access_token", tokenResponseDto.getAccess());
         assertEquals("new_refresh_token", tokenResponseDto.getRefresh());
 
-        verify(redisTemplate, times(4)).delete(anyString());
-        verify(hashOperations, times(2)).put(anyString(), anyString(), eq(userId));
-        verify(redisTemplate, times(1)).expire(anyString(), eq(2L), eq(TimeUnit.HOURS));
+        verify(redisTemplate, times(2)).delete(anyString());
+        verify(hashOperations, times(1)).put(anyString(), anyString(), eq(userId));
         verify(redisTemplate, times(1)).expire(anyString(), eq(14L), eq(TimeUnit.DAYS));
     }
 
@@ -122,6 +126,7 @@ class AuthServiceTest {
         when(passwordEncoder.matches(clientPassword, encodedPassword)).thenReturn(true);
         when(jwtUtils.createRefreshToken(anyString(), eq(List.of(role)))).thenReturn("new_refresh_token");
         when(jwtUtils.createAccessToken(anyString(), eq(List.of(role)))).thenReturn("new_access_token");
+        when(transformerUtils.encode(userId.toString())).thenReturn("new_access_token");
 
         TokenResponseDto tokenResponseDto = authServiceImp.login(clientEmail, clientPassword);
 
@@ -129,9 +134,8 @@ class AuthServiceTest {
         assertEquals("new_access_token", tokenResponseDto.getAccess());
         assertEquals("new_refresh_token", tokenResponseDto.getRefresh());
 
-        verify(redisTemplate, times(2)).delete(anyString());
-        verify(hashOperations, times(2)).put(anyString(), anyString(), eq(userId));
-        verify(redisTemplate, times(1)).expire(anyString(), eq(2L), eq(TimeUnit.HOURS));
+        verify(redisTemplate, times(1)).delete(anyString());
+        verify(hashOperations, times(1)).put(anyString(), anyString(), eq(userId));
         verify(redisTemplate, times(1)).expire(anyString(), eq(14L), eq(TimeUnit.DAYS));
     }
 
@@ -185,7 +189,7 @@ class AuthServiceTest {
         when(restTemplate.getForEntity(anyString(), eq(PaycoOAuthResponseDto.class))).thenReturn(ResponseEntity.ok(tokenResponseDto));
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(PaycoUserInfoResponseDto.class))).thenReturn(ResponseEntity.ok(userInfoResponseDto));
 
-        authServiceImp = new AuthServiceImp(client, jwtUtils, restTemplate, rabbitTemplate, passwordEncoder, redisTemplate);
+        authServiceImp = new AuthServiceImp(client, jwtUtils, restTemplate, rabbitTemplate, passwordEncoder, transformerUtils, redisTemplate);
         ReflectionTestUtils.setField(authServiceImp, "paycoClientId", "payco_client_id");
         ReflectionTestUtils.setField(authServiceImp, "paycoTokenUri", "http://payco/token");
         ReflectionTestUtils.setField(authServiceImp, "paycoUserInfoUri", "http://payco/userinfo");
@@ -221,7 +225,7 @@ class AuthServiceTest {
         when(restTemplate.getForEntity(anyString(), eq(PaycoOAuthResponseDto.class))).thenReturn(ResponseEntity.ok(tokenResponseDto));
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(PaycoUserInfoResponseDto.class))).thenReturn(ResponseEntity.ok(userInfoResponseDto));
 
-        authServiceImp = new AuthServiceImp(client, jwtUtils, restTemplate, rabbitTemplate, passwordEncoder, redisTemplate);
+        authServiceImp = new AuthServiceImp(client, jwtUtils, restTemplate, rabbitTemplate, passwordEncoder, transformerUtils, redisTemplate);
         ReflectionTestUtils.setField(authServiceImp, "paycoClientId", "payco_client_id");
         ReflectionTestUtils.setField(authServiceImp, "paycoTokenUri", "http://payco/token");
         ReflectionTestUtils.setField(authServiceImp, "paycoUserInfoUri", "http://payco/userinfo");
@@ -248,6 +252,7 @@ class AuthServiceTest {
         when(client.login(uuid)).thenReturn(ResponseEntity.ok(responseDto));
         when(jwtUtils.createAccessToken(anyString(), eq(List.of("ROLE_USER")))).thenReturn("new_access_token");
         when(jwtUtils.createRefreshToken(anyString(), eq(List.of("ROLE_USER")))).thenReturn("new_refresh_token");
+        when(transformerUtils.encode(responseDto.getClientId().toString())).thenReturn("new_client_id");
 
         TokenResponseDto tokenResponseDto = authServiceImp.oAuthRegister(access, name, birth);
 
@@ -256,9 +261,8 @@ class AuthServiceTest {
         assertEquals("new_refresh_token", tokenResponseDto.getRefresh());
 
         verify(client, times(1)).createOauthClient(any(ClientOAuthRegisterRequestDto.class));
-        verify(redisTemplate, times(2)).delete(anyString());
-        verify(hashOperations, times(2)).put(anyString(), anyString(), eq(1L));
-        verify(redisTemplate, times(1)).expire(anyString(), eq(2L), eq(TimeUnit.HOURS));
+        verify(redisTemplate, times(1)).delete(anyString());
+        verify(hashOperations, times(1)).put(anyString(), anyString(), eq(1L));
         verify(redisTemplate, times(1)).expire(anyString(), eq(14L), eq(TimeUnit.DAYS));
     }
 }
