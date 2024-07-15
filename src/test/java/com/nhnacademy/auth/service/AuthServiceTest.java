@@ -119,7 +119,6 @@ class AuthServiceTest {
         String encodedPassword = "encoded_password";
         Long userId = 1L;
         String role = "ROLE_USER";
-        String uuid = UUID.randomUUID().toString();
         ClientLoginResponseDto responseDto = new ClientLoginResponseDto(List.of(role), userId, clientEmail, encodedPassword, "hi");
 
         when(client.login(clientEmail)).thenReturn(ResponseEntity.ok(responseDto));
@@ -181,7 +180,6 @@ class AuthServiceTest {
         userInfoResponseDto.setData(new PaycoUserInfoResponseDto.Data());
         userInfoResponseDto.getData().setMember(member);
 
-        RestTemplate restTemplate = mock(RestTemplate.class);
         HttpHeaders headers = new HttpHeaders();
         headers.set("client_id", "payco_client_id");
         headers.set("access_token", "access_token");
@@ -217,7 +215,6 @@ class AuthServiceTest {
         userInfoResponseDto.setData(new PaycoUserInfoResponseDto.Data());
         userInfoResponseDto.getData().setMember(member);
 
-        RestTemplate restTemplate = mock(RestTemplate.class);
         HttpHeaders headers = new HttpHeaders();
         headers.set("client_id", "payco_client_id");
         headers.set("access_token", "access_token");
