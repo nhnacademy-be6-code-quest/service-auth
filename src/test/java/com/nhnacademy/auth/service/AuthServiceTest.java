@@ -21,7 +21,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
@@ -90,6 +89,7 @@ class AuthServiceTest {
         when(jwtUtils.createRefreshToken(anyString(), eq(List.of(role)))).thenReturn("new_refresh_token");
         when(jwtUtils.createAccessToken(anyString(), eq(List.of(role)))).thenReturn("new_access_token");
         when(jwtUtils.getUUID(access)).thenReturn("new_access_token");
+        when(transformerUtils.encode(anyString())).thenReturn("new_access_token");
 
         TokenResponseDto tokenResponseDto = authServiceImp.reissue(refresh, access);
 
