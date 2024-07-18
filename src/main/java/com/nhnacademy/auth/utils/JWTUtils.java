@@ -3,6 +3,7 @@ package com.nhnacademy.auth.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -13,21 +14,13 @@ import java.util.List;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JWTUtils {
-    private final SecretKey secretKey;
+    private final SecretKey jwtSecretKey;
     @Value("${spring.jwt.access.expiredMs}")
-    private final Long accessExpiredMs;
+    private Long accessExpiredMs;
     @Value("${spring.jwt.refresh.expiredMs}")
-    private final Long refreshExpiredMs;
-
-    public JWTUtils(
-            SecretKey secretKey,
-            @Value("${spring.jwt.access.expiredMs}")Long accessExpiredMs,
-            @Value("${spring.jwt.refresh.expiredMs}")Long refreshExpiredMs) {
-        this.secretKey = secretKey;
-        this.accessExpiredMs = accessExpiredMs;
-        this.refreshExpiredMs = refreshExpiredMs;
-    }
+    private Long refreshExpiredMs;
 
     public String getCategory(String token) {
         return getClaimsFromToken(token).get("category", String.class);
@@ -51,7 +44,7 @@ public class JWTUtils {
     }
 
     private Claims getClaimsFromToken(String token) throws JwtException {
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+        return Jwts.parser().verifyWith(jwtSecretKey).build().parseSignedClaims(token).getPayload();
     }
 
     public String createAccessToken(String uuid, List<String> roles) {
@@ -69,7 +62,7 @@ public class JWTUtils {
                 .claim("role", roles)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
-                .signWith(secretKey)
+                .signWith(jwtSecretKey)
                 .compact();
     }
 }

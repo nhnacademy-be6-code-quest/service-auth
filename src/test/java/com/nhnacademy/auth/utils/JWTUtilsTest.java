@@ -23,7 +23,9 @@ class JWTUtilsTest {
 
     @BeforeEach
     void setUp() {
-        jwtUtils = new JWTUtils(secretKey, accessExpiredMs, refreshExpiredMs);
+        jwtUtils = new JWTUtils(secretKey);
+        ReflectionTestUtils.setField(jwtUtils, "accessExpiredMs", accessExpiredMs);
+        ReflectionTestUtils.setField(jwtUtils, "refreshExpiredMs", refreshExpiredMs);
     }
 
     @Test
