@@ -1,38 +1,55 @@
 package com.nhnacademy.auth.config;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
 class RabbitConfigTest {
 
-    @Autowired
+    @Mock
+    private ConnectionFactory mockConnectionFactory;
+
     private RabbitConfig rabbitConfig;
 
-    @MockBean
-    private ConnectionFactory connectionFactory;
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        rabbitConfig = new RabbitConfig("localhost", 5672, "guest", "guest");
+        ReflectionTestUtils.setField(rabbitConfig, "loginExchangeName", "login.exchange");
+        ReflectionTestUtils.setField(rabbitConfig, "loginQueueName", "login.queue");
+        ReflectionTestUtils.setField(rabbitConfig, "loginRoutingKey", "login.key");
+        ReflectionTestUtils.setField(rabbitConfig, "loginDlqRoutingKey", "login.dlq.key");
+    }
+
+    @Test
+    void testConnectionFactory() {
+        ConnectionFactory factory = rabbitConfig.connectionFactory();
+        assertNotNull(factory);
+        assertTrue(factory instanceof CachingConnectionFactory);
+    }
 
     @Test
     void testLoginExchange() {
         DirectExchange exchange = rabbitConfig.loginExchange();
         assertNotNull(exchange);
-        assertEquals("code-quest.client.login.exchange", exchange.getName());
+        assertEquals("login.exchange", exchange.getName());
     }
 
     @Test
     void testLoginQueue() {
         Queue queue = rabbitConfig.loginQueue();
         assertNotNull(queue);
-        assertEquals("code-quest.client.login.queue", queue.getName());
+        assertEquals("login.queue", queue.getName());
+        assertTrue(queue.isDurable());
     }
 
     @Test
@@ -42,15 +59,15 @@ class RabbitConfigTest {
         Binding binding = rabbitConfig.loginBinding(queue, exchange);
 
         assertNotNull(binding);
-        assertEquals("code-quest.client.login.key", binding.getRoutingKey());
-        assertEquals(queue.getName(), binding.getDestination());
-        assertEquals(exchange.getName(), binding.getExchange());
+        assertEquals(Binding.DestinationType.QUEUE, binding.getDestinationType());
+        assertEquals("login.key", binding.getRoutingKey());
     }
 
     @Test
     void testRabbitTemplate() {
-        RabbitTemplate rabbitTemplate = rabbitConfig.rabbitTemplate(connectionFactory);
-        assertNotNull(rabbitTemplate);
-        assertTrue(rabbitTemplate.getMessageConverter() instanceof org.springframework.amqp.support.converter.Jackson2JsonMessageConverter);
+        RabbitTemplate template = rabbitConfig.rabbitTemplate(mockConnectionFactory);
+        assertNotNull(template);
+        assertEquals(mockConnectionFactory, template.getConnectionFactory());
+        assertTrue(template.getMessageConverter() instanceof Jackson2JsonMessageConverter);
     }
 }

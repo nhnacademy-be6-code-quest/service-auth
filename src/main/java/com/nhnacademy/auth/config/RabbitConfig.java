@@ -36,12 +36,12 @@ public class RabbitConfig {
     }
 
     @Bean
-    DirectExchange loginExchange() {
+    public DirectExchange loginExchange() {
         return new DirectExchange(loginExchangeName);
     }
 
     @Bean
-    Queue loginQueue() {
+    public Queue loginQueue() {
         return QueueBuilder.durable(loginQueueName)
                 .withArgument("x-dead-letter-exchange", loginExchangeName)
                 .withArgument("x-dead-letter-routing-key", loginDlqRoutingKey)
@@ -49,12 +49,12 @@ public class RabbitConfig {
     }
 
     @Bean
-    Binding loginBinding(Queue queue, DirectExchange exchange) {
+    public Binding loginBinding(Queue queue, DirectExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(loginRoutingKey);
     }
 
     @Bean
-    RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
         return rabbitTemplate;
