@@ -11,7 +11,7 @@ import java.util.Base64;
 @Component
 @RequiredArgsConstructor
 public class TransformerUtils {
-    private String clientEncodingKey;
+    private final String clientEncodingKey;
 
     public String encode(String input) {
         byte[] inputBytes = input.getBytes(StandardCharsets.UTF_8);
