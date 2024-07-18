@@ -39,10 +39,6 @@ import java.util.concurrent.TimeUnit;
 public class AuthServiceImp implements AuthService {
     private static final String PAYCO_PREFIX = "payco_";
 
-    @Value("${payco.client.id}")
-    private String paycoClientId;
-    @Value("${payco.client.secret}")
-    private String paycoClientSecret;
     @Value("${payco.token.uri}")
     private String paycoTokenUri;
     @Value("${payco.user-info.uri}")
@@ -51,6 +47,9 @@ public class AuthServiceImp implements AuthService {
     private String loginExchangeName;
     @Value("${rabbit.login.routing.key}")
     private String loginRoutingKey;
+
+    private final String paycoClientId;
+    private final String paycoClientSecret;
 
     private final Client client;
     private final JWTUtils jwtUtils;

@@ -1,38 +1,59 @@
 package com.nhnacademy.auth.config;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.redis.DataRedisTest;
-import org.springframework.context.annotation.Import;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-@DataRedisTest
-@Import(RedisTemplateConfig.class)
 class RedisTemplateConfigTest {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    @Mock
+    private RedisConnectionFactory mockRedisConnectionFactory;
 
-    @Autowired
-    private RedisConnectionFactory redisConnectionFactory;
+    private RedisTemplateConfig redisTemplateConfig;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        redisTemplateConfig = new RedisTemplateConfig("localhost", 6379, "password", 0);
+    }
+
+    @Test
+    void testRedisConnectionFactory() {
+        ReflectionTestUtils.setField(redisTemplateConfig, "redisHost", "testhost");
+        ReflectionTestUtils.setField(redisTemplateConfig, "redisPort", 1234);
+        ReflectionTestUtils.setField(redisTemplateConfig, "redisPassword", "testpassword");
+        ReflectionTestUtils.setField(redisTemplateConfig, "redisDb", 1);
+
+        RedisConnectionFactory factory = redisTemplateConfig.redisConnectionFactory();
+
+        assertNotNull(factory);
+        assertTrue(factory instanceof LettuceConnectionFactory);
+
+        LettuceConnectionFactory lettuceFactory = (LettuceConnectionFactory) factory;
+        assertEquals("testhost", lettuceFactory.getHostName());
+        assertEquals(1234, lettuceFactory.getPort());
+        assertEquals("testpassword", lettuceFactory.getPassword());
+        assertEquals(1, lettuceFactory.getDatabase());
+    }
 
     @Test
     void testRedisTemplate() {
-        // Check that redisTemplate is not null
-        assertThat(redisTemplate).isNotNull();
+        RedisTemplate<String, Object> template = redisTemplateConfig.redisTemplate(mockRedisConnectionFactory);
 
-        // Check that redisTemplate has the correct connection factory
-        assertThat(redisTemplate.getConnectionFactory()).isEqualTo(redisConnectionFactory);
-
-        // Check serializers
-        assertThat(redisTemplate.getKeySerializer()).isInstanceOf(StringRedisSerializer.class);
-        assertThat(redisTemplate.getValueSerializer()).isInstanceOf(GenericJackson2JsonRedisSerializer.class);
-        assertThat(redisTemplate.getHashKeySerializer()).isInstanceOf(StringRedisSerializer.class);
-        assertThat(redisTemplate.getHashValueSerializer()).isInstanceOf(GenericJackson2JsonRedisSerializer.class);
+        assertNotNull(template);
+        assertEquals(mockRedisConnectionFactory, template.getConnectionFactory());
+        assertTrue(template.getKeySerializer() instanceof StringRedisSerializer);
+        assertTrue(template.getValueSerializer() instanceof GenericJackson2JsonRedisSerializer);
+        assertTrue(template.getHashKeySerializer() instanceof StringRedisSerializer);
+        assertTrue(template.getHashValueSerializer() instanceof GenericJackson2JsonRedisSerializer);
     }
 }

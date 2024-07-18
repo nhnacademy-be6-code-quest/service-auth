@@ -61,6 +61,10 @@ class AuthServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    private String paycoClientId;
+
+    private String paycoClientSecret;
+
     @InjectMocks
     private AuthServiceImp authServiceImp;
 
@@ -187,7 +191,7 @@ class AuthServiceTest {
         when(restTemplate.getForEntity(anyString(), eq(PaycoOAuthResponseDto.class))).thenReturn(ResponseEntity.ok(tokenResponseDto));
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(PaycoUserInfoResponseDto.class))).thenReturn(ResponseEntity.ok(userInfoResponseDto));
 
-        authServiceImp = new AuthServiceImp(client, jwtUtils, restTemplate, rabbitTemplate, passwordEncoder, transformerUtils, redisTemplate);
+        authServiceImp = new AuthServiceImp(paycoClientId, paycoClientSecret, client, jwtUtils, restTemplate, rabbitTemplate, passwordEncoder, transformerUtils, redisTemplate);
         ReflectionTestUtils.setField(authServiceImp, "paycoClientId", "payco_client_id");
         ReflectionTestUtils.setField(authServiceImp, "paycoTokenUri", "http://payco/token");
         ReflectionTestUtils.setField(authServiceImp, "paycoUserInfoUri", "http://payco/userinfo");
@@ -222,7 +226,7 @@ class AuthServiceTest {
         when(restTemplate.getForEntity(anyString(), eq(PaycoOAuthResponseDto.class))).thenReturn(ResponseEntity.ok(tokenResponseDto));
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(PaycoUserInfoResponseDto.class))).thenReturn(ResponseEntity.ok(userInfoResponseDto));
 
-        authServiceImp = new AuthServiceImp(client, jwtUtils, restTemplate, rabbitTemplate, passwordEncoder, transformerUtils, redisTemplate);
+        authServiceImp = new AuthServiceImp(paycoClientId, paycoClientSecret, client, jwtUtils, restTemplate, rabbitTemplate, passwordEncoder, transformerUtils, redisTemplate);
         ReflectionTestUtils.setField(authServiceImp, "paycoClientId", "payco_client_id");
         ReflectionTestUtils.setField(authServiceImp, "paycoTokenUri", "http://payco/token");
         ReflectionTestUtils.setField(authServiceImp, "paycoUserInfoUri", "http://payco/userinfo");

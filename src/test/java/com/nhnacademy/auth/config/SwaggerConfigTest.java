@@ -3,30 +3,44 @@ package com.nhnacademy.auth.config;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.ActiveProfiles;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
 class SwaggerConfigTest {
 
-    @Autowired
-    private ApplicationContext applicationContext;
-
     @Test
-    void testCustomOpenAPIBean() {
-        OpenAPI openAPI = applicationContext.getBean(OpenAPI.class);
+    void testCustomOpenAPI() {
+        SwaggerConfig config = new SwaggerConfig();
+        OpenAPI openAPI = config.customOpenAPI();
 
-        assertThat(openAPI).isNotNull();
+        assertNotNull(openAPI);
+        assertNotNull(openAPI.getComponents());
+        assertNotNull(openAPI.getInfo());
 
         Info info = openAPI.getInfo();
-        assertThat(info).isNotNull();
-        assertThat(info.getTitle()).isEqualTo("Auth API");
-        assertThat(info.getVersion()).isEqualTo("1.0");
-        assertThat(info.getDescription()).isEqualTo("Auth API");
+        assertEquals("Auth API", info.getTitle());
+        assertEquals("1.0", info.getVersion());
+        assertEquals("Auth API", info.getDescription());
+    }
+
+    @Test
+    void testOpenAPIComponentsAreEmpty() {
+        SwaggerConfig config = new SwaggerConfig();
+        OpenAPI openAPI = config.customOpenAPI();
+
+        assertNotNull(openAPI.getComponents());
+        assertTrue(openAPI.getComponents().getSchemas() == null || openAPI.getComponents().getSchemas().isEmpty());
+        assertTrue(openAPI.getComponents().getSecuritySchemes() == null || openAPI.getComponents().getSecuritySchemes().isEmpty());
+    }
+
+    @Test
+    void testOpenAPIInfoNotNull() {
+        SwaggerConfig config = new SwaggerConfig();
+        OpenAPI openAPI = config.customOpenAPI();
+
+        assertNotNull(openAPI.getInfo());
+        assertNotNull(openAPI.getInfo().getTitle());
+        assertNotNull(openAPI.getInfo().getVersion());
+        assertNotNull(openAPI.getInfo().getDescription());
     }
 }

@@ -5,11 +5,11 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TransformerUtilsTest {
-    private TransformerUtils transformerUtils = new TransformerUtils();
+    private TransformerUtils transformerUtils = new TransformerUtils("asdf");
 
     @BeforeEach
     void setUp() {
-        transformerUtils.setKey("asdf");
+
     }
 
     @Test
