@@ -1,5 +1,6 @@
 package com.nhnacademy.auth.utils;
 
+import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -7,6 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +36,8 @@ class JWTUtilsTest {
 
     @BeforeEach
     void setUp() {
-        jwtUtils = new JWTUtils(secret, accessExpiredMs, refreshExpiredMs);
+
+        jwtUtils = new JWTUtils(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm()), accessExpiredMs, refreshExpiredMs);
     }
 
     @Test

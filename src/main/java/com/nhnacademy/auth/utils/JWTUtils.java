@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -17,14 +18,16 @@ import java.util.List;
 @Component
 public class JWTUtils {
     private final SecretKey secretKey;
+    @Value("${spring.jwt.access.expiredMs}")
     private final Long accessExpiredMs;
+    @Value("${spring.jwt.refresh.expiredMs}")
     private final Long refreshExpiredMs;
 
     public JWTUtils(
-            @Value("${spring.jwt.secret}")String secret,
+            SecretKey secretKey,
             @Value("${spring.jwt.access.expiredMs}")Long accessExpiredMs,
             @Value("${spring.jwt.refresh.expiredMs}")Long refreshExpiredMs) {
-        secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
+        this.secretKey = secretKey;
         this.accessExpiredMs = accessExpiredMs;
         this.refreshExpiredMs = refreshExpiredMs;
     }

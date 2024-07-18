@@ -9,7 +9,7 @@ class TransformerUtilsTest {
 
     @BeforeEach
     void setUp() {
-        transformerUtils.setKey("asdf");
+        transformerUtils.setClientEncodingKey("asdf");
     }
 
     @Test
