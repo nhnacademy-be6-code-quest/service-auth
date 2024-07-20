@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -28,6 +29,9 @@ class SecurityConfigTest {
 
     @MockBean
     private JWTUtils jwtUtils;
+
+    @MockBean
+    private RedisTemplate<String, Object> redisTemplate;
 
     @MockBean
     private AuthenticationConfiguration authenticationConfiguration;

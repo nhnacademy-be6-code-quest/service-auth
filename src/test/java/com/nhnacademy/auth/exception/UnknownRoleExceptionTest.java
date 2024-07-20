@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class UnknownRoleExceptionTest {
+class UnknownRoleExceptionTest {
 
     @Test
-    public void testExceptionMessage() {
+    void testExceptionMessage() {
         String errorMessage = "Invalid role: ROLE_UNKNOWN";
         UnknownRoleException exception = new UnknownRoleException(errorMessage);
 
@@ -16,7 +16,7 @@ public class UnknownRoleExceptionTest {
     }
 
     @Test
-    public void testThrowException() {
+    void testThrowException() {
         String errorMessage = "Invalid role: ROLE_UNKNOWN";
 
         assertThatThrownBy(() -> {

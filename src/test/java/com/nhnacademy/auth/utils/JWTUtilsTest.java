@@ -1,89 +1,92 @@
 package com.nhnacademy.auth.utils;
 
+import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
-@SpringBootTest
-@TestPropertySource(properties = {
-        "spring.jwt.secret=01234567890123456789012345678901" // 32 characters long secret key
-})
-public class JWTUtilsTest {
+import static org.junit.jupiter.api.Assertions.*;
 
-    @Value("${spring.jwt.secret}")
-    private String secret;
+class JWTUtilsTest {
 
     private JWTUtils jwtUtils;
+    private final String secretKeyString = "yourSecretKeyHereThatIsAtLeast32BytesLong";
+    private final SecretKey secretKey = new SecretKeySpec(secretKeyString.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+    private final Long accessExpiredMs = 3600000L; // 1 hour
+    private final Long refreshExpiredMs = 86400000L; // 24 hours
 
     @BeforeEach
-    public void setUp() {
-        jwtUtils = new JWTUtils(secret);
+    void setUp() {
+        jwtUtils = new JWTUtils(secretKey);
+        ReflectionTestUtils.setField(jwtUtils, "accessExpiredMs", accessExpiredMs);
+        ReflectionTestUtils.setField(jwtUtils, "refreshExpiredMs", refreshExpiredMs);
     }
 
     @Test
-    public void testCreateJwt() {
-        String email = "test@example.com";
-        String name = "Test User";
-        String role = "USER";
-        Long expiredMs = 1000L * 60 * 60; // 1 hour
+    void testCreateAccessToken() {
+        String uuid = "test-uuid";
+        List<String> roles = Arrays.asList("ROLE_USER", "ROLE_ADMIN");
+        String token = jwtUtils.createAccessToken(uuid, roles);
 
-        String token = jwtUtils.createJwt(email, name, role, expiredMs);
-
-        assertThat(token).isNotNull();
+        assertNotNull(token);
+        assertEquals("access", jwtUtils.getCategory(token));
+        assertEquals(uuid, jwtUtils.getUUID(token));
+        assertEquals(roles, jwtUtils.getRole(token));
+        assertFalse(jwtUtils.isExpired(token));
     }
 
     @Test
-    public void testGetUserEmail() {
-        String email = "test@example.com";
-        String name = "Test User";
-        String role = "USER";
-        Long expiredMs = 1000L * 60 * 60; // 1 hour
+    void testCreateRefreshToken() {
+        String uuid = "test-uuid";
+        List<String> roles = Arrays.asList("ROLE_USER", "ROLE_ADMIN");
+        String token = jwtUtils.createRefreshToken(uuid, roles);
 
-        String token = jwtUtils.createJwt(email, name, role, expiredMs);
-        String extractedEmail = jwtUtils.getUserEmail(token);
-
-        assertThat(extractedEmail).isEqualTo(email);
+        assertNotNull(token);
+        assertEquals("refresh", jwtUtils.getCategory(token));
+        assertEquals(uuid, jwtUtils.getUUID(token));
+        assertEquals(roles, jwtUtils.getRole(token));
+        assertFalse(jwtUtils.isExpired(token));
     }
 
     @Test
-    public void testGetUserName() {
-        String email = "test@example.com";
-        String name = "Test User";
-        String role = "USER";
-        Long expiredMs = 1000L * 60 * 60; // 1 hour
+    void testIsExpired() {
+        String uuid = "test-uuid";
+        List<String> roles = Arrays.asList("ROLE_USER");
 
-        String token = jwtUtils.createJwt(email, name, role, expiredMs);
-        String extractedName = jwtUtils.getUserName(token);
+        // Create a token that expires immediately
+        String expiredToken = jwtUtils.createJwt("test", uuid, roles, -1000L);
+        assertTrue(jwtUtils.isExpired(expiredToken));
 
-        assertThat(extractedName).isEqualTo(name);
+        // Create a token that doesn't expire for a while
+        String validToken = jwtUtils.createAccessToken(uuid, roles);
+        assertFalse(jwtUtils.isExpired(validToken));
     }
 
     @Test
-    public void testGetRole() {
-        String email = "test@example.com";
-        String name = "Test User";
-        String role = "USER";
-        Long expiredMs = 1000L * 60 * 60; // 1 hour
+    void testGetClaimsFromToken() {
+        String uuid = "test-uuid";
+        List<String> roles = Arrays.asList("ROLE_USER", "ROLE_ADMIN");
+        String token = jwtUtils.createAccessToken(uuid, roles);
 
-        String token = jwtUtils.createJwt(email, name, role, expiredMs);
-        String extractedRole = jwtUtils.getRole(token);
-
-        assertThat(extractedRole).isEqualTo(role);
+        Claims claims = ReflectionTestUtils.invokeMethod(jwtUtils, "getClaimsFromToken", token);
+        assertNotNull(claims);
+        assertEquals("access", claims.get("category"));
+        assertEquals(uuid, claims.get("uuid"));
+        assertEquals(roles, claims.get("role"));
     }
 
     @Test
-    public void testIsExpired() {
-        String email = "test@example.com";
-        String name = "Test User";
-        String role = "USER";
-        Long expiredMs = 1000L * 60 * 60; // 1 hour
-
-        String token = jwtUtils.createJwt(email, name, role, expiredMs);
-
-        assertThat(jwtUtils.isExpired(token)).isFalse();
+    void testInvalidToken() {
+        String invalidToken = "invalidToken";
+        assertThrows(Exception.class, () -> jwtUtils.getCategory(invalidToken));
+        assertThrows(Exception.class, () -> jwtUtils.getUUID(invalidToken));
+        assertThrows(Exception.class, () -> jwtUtils.getRole(invalidToken));
+        assertTrue(jwtUtils.isExpired(invalidToken));
     }
 }
