@@ -13,4 +13,10 @@
 [👥 Client Service](https://github.com/nhnacademy-be6-code-quest/service-client)
 
 ### Architecture
-![Auth Architecture](https://github.com/nhnacademy-be6-code-quest/.github/blob/main/img/ArchitectureAuth.png)
+
+![Auth Architecture](https://github.com/nhnacademy-be6-code-quest/.github/blob/main/img/auth/AuthArchitecture.png)
+
+### Test
+
+![Auth Test](https://github.com/nhnacademy-be6-code-quest/.github/blob/main/img/auth/AuthTest.png)
+
