@@ -10,20 +10,22 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import java.util.Map;
-
 @Configuration
 @RequiredArgsConstructor
 public class RedisTemplateConfig {
-    private final Map<String, String> redisKey;
+    private final String redisHost;
+    private final int redisPort;
+    private final String redisPassword;
+    private final int redisDb;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
-        redisStandaloneConfiguration.setHostName(redisKey.get("host"));
-        redisStandaloneConfiguration.setPort(Integer.parseInt(redisKey.get("port")));
-        redisStandaloneConfiguration.setPassword(redisKey.get("password"));
-        redisStandaloneConfiguration.setDatabase(Integer.parseInt(redisKey.get("db")));
+        redisStandaloneConfiguration.setHostName(redisHost);
+        redisStandaloneConfiguration.setPort(redisPort);
+        redisStandaloneConfiguration.setPassword(redisPassword);
+        redisStandaloneConfiguration.setDatabase(redisDb);
+
         return new LettuceConnectionFactory(redisStandaloneConfiguration);
     }
 
