@@ -13,15 +13,18 @@
 
     <appender name="LOGNCRASH" class="com.nhnacademy.auth.config.LogAndCrashAppender">
         <appKey>Xyx7DoyszcG66ULx</appKey>
-        <platform>code-quest.auth.dev</platform>
+        <platform>code-quest.auth</platform>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>WARN</level>
         </filter>
-
     </appender>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
-        <appender-ref ref="LOGNCRASH" />
     </root>
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="LOGNCRASH" />
+        </root>
+    </springProfile>
 </configuration>
