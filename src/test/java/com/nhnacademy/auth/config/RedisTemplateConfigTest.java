@@ -9,8 +9,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-import java.util.Map;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,26 +23,26 @@ class RedisTemplateConfigTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        redisTemplateConfig = new RedisTemplateConfig(Map.of(
-                "host", "localhost",
-                "port", "6379",
-                "password", "password",
-                "db", "0"
-        ));
+        redisTemplateConfig = new RedisTemplateConfig("localhost", 6379, "password", 0);
     }
 
     @Test
     void testRedisConnectionFactory() {
+        ReflectionTestUtils.setField(redisTemplateConfig, "redisHost", "testhost");
+        ReflectionTestUtils.setField(redisTemplateConfig, "redisPort", 1234);
+        ReflectionTestUtils.setField(redisTemplateConfig, "redisPassword", "testpassword");
+        ReflectionTestUtils.setField(redisTemplateConfig, "redisDb", 1);
+
         RedisConnectionFactory factory = redisTemplateConfig.redisConnectionFactory();
 
         assertNotNull(factory);
         assertTrue(factory instanceof LettuceConnectionFactory);
 
         LettuceConnectionFactory lettuceFactory = (LettuceConnectionFactory) factory;
-        assertEquals("localhost", lettuceFactory.getHostName());
-        assertEquals(6379, lettuceFactory.getPort());
-        assertEquals("password", lettuceFactory.getPassword());
-        assertEquals(0, lettuceFactory.getDatabase());
+        assertEquals("testhost", lettuceFactory.getHostName());
+        assertEquals(1234, lettuceFactory.getPort());
+        assertEquals("testpassword", lettuceFactory.getPassword());
+        assertEquals(1, lettuceFactory.getDatabase());
     }
 
     @Test
