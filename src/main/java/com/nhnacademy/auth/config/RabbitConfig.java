@@ -10,13 +10,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Map;
+
 @Configuration
 @RequiredArgsConstructor
 public class RabbitConfig {
-    private final String rabbitHost;
-    private final int rabbitPort;
-    private final String rabbitUsername;
-    private final String rabbitPassword;
+    private final Map<String, String> rabbitKey;
 
     @Value("${rabbit.login.exchange.name}")
     private String loginExchangeName;
@@ -29,9 +28,9 @@ public class RabbitConfig {
 
     @Bean
     public ConnectionFactory connectionFactory() {
-        CachingConnectionFactory connectionFactory = new CachingConnectionFactory(rabbitHost, rabbitPort);
-        connectionFactory.setUsername(rabbitUsername);
-        connectionFactory.setPassword(rabbitPassword);
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory(rabbitKey.get("host"), Integer.parseInt(rabbitKey.get("port")));
+        connectionFactory.setUsername(rabbitKey.get("username"));
+        connectionFactory.setPassword(rabbitKey.get("password"));
         return connectionFactory;
     }
 

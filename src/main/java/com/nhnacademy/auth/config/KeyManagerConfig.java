@@ -40,62 +40,6 @@ public class KeyManagerConfig {
     }
 
     @Bean
-    public String redisHost() {
-        String redisHost = getKey(keyManagerClient.getRedisHost(getAccessHeaders()));
-        log.info("Redis Host Key: {}", redisHost);
-        return redisHost;
-    }
-
-    @Bean
-    public String redisPassword() {
-        String redisPassword = getKey(keyManagerClient.getRedisPassword(getAccessHeaders()));
-        log.info("Redis Password Key: {}", redisPassword);
-        return redisPassword;
-    }
-
-    @Bean
-    public Integer redisPort() {
-        String redisPort = getKey(keyManagerClient.getRedisPort(getAccessHeaders()));
-        log.info("Redis Port Key: {}", redisPort);
-        return Integer.parseInt(redisPort);
-    }
-
-    @Bean
-    public Integer redisDb() {
-        String redisDb = getKey(keyManagerClient.getRedisDb(getAccessHeaders()));
-        log.info("Redis Db Key: {}", redisDb);
-        return Integer.parseInt(redisDb);
-    }
-
-    @Bean
-    public String rabbitHost() {
-        String rabbitmqHost = getKey(keyManagerClient.getRabbitmqHost(getAccessHeaders()));
-        log.info("Rabbitmq Host Key: {}", rabbitmqHost);
-        return rabbitmqHost;
-    }
-
-    @Bean
-    public String rabbitPassword() {
-        String rabbitmqPassword = getKey(keyManagerClient.getRabbitmqPassword(getAccessHeaders()));
-        log.info("Rabbitmq Password Key: {}", rabbitmqPassword);
-        return rabbitmqPassword;
-    }
-
-    @Bean
-    public String rabbitUsername() {
-        String rabbitmqUsername = getKey(keyManagerClient.getRabbitmqUsername(getAccessHeaders()));
-        log.info("Rabbitmq Username: {}", rabbitmqUsername);
-        return rabbitmqUsername;
-    }
-
-    @Bean
-    public Integer rabbitPort() {
-        String rabbitmqPort = getKey(keyManagerClient.getRabbitmqPort(getAccessHeaders()));
-        log.info("Rabbitmq Port Key: {}", rabbitmqPort);
-        return Integer.parseInt(rabbitmqPort);
-    }
-
-    @Bean
     public String paycoClientId() {
         String paycoClientId = getKey(keyManagerClient.getPaycoClientId(getAccessHeaders()));
         log.info("Payco Client Id Key: {}", paycoClientId);
@@ -107,6 +51,38 @@ public class KeyManagerConfig {
         String paycoClientSecret = getKey(keyManagerClient.getPaycoClientSecret(getAccessHeaders()));
         log.info("Payco Client Secret Key: {}", paycoClientSecret);
         return paycoClientSecret;
+    }
+
+    @Bean
+    public Map<String, String> redisKey() {
+        String redisHost = getKey(keyManagerClient.getRedisHost(getAccessHeaders()));
+        log.info("Redis Host Key: {}", redisHost);
+        String redisPassword = getKey(keyManagerClient.getRedisPassword(getAccessHeaders()));
+        log.info("Redis Password Key: {}", redisPassword);
+        String redisPort = getKey(keyManagerClient.getRedisPort(getAccessHeaders()));
+        log.info("Redis Port Key: {}", redisPort);
+        String redisDb = getKey(keyManagerClient.getRedisDb(getAccessHeaders()));
+        log.info("Redis Db Key: {}", redisDb);
+        return Map.of("host", redisHost,
+                "password", redisPassword,
+                "port", redisPort,
+                "db", redisDb);
+    }
+
+    @Bean
+    public Map<String, String> rabbitKey() {
+        String rabbitmqHost = getKey(keyManagerClient.getRabbitmqHost(getAccessHeaders()));
+        log.info("Rabbitmq Host Key: {}", rabbitmqHost);
+        String rabbitmqPassword = getKey(keyManagerClient.getRabbitmqPassword(getAccessHeaders()));
+        log.info("Rabbitmq Password Key: {}", rabbitmqPassword);
+        String rabbitmqUsername = getKey(keyManagerClient.getRabbitmqUsername(getAccessHeaders()));
+        log.info("Rabbitmq Username: {}", rabbitmqUsername);
+        String rabbitmqPort = getKey(keyManagerClient.getRabbitmqPort(getAccessHeaders()));
+        log.info("Rabbitmq Port Key: {}", rabbitmqPort);
+        return Map.of("host", rabbitmqHost,
+                "password", rabbitmqPassword,
+                "username", rabbitmqUsername,
+                "port", rabbitmqPort);
     }
 
     private HttpHeaders getAccessHeaders() {
