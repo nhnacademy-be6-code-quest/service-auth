@@ -52,4 +52,4 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         port: ${{ secrets.SSH_PORT }}
         script_stop: true
-        script: "./auth_startup.sh"
+        script: "./CD/main.sh 8009 10009 Auth-0.0.1-SNAPSHOT.jar auth_log"
